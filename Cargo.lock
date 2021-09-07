@@ -897,6 +897,8 @@ dependencies = [
 [[package]]
 name = "skyblock-rs"
 version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1897963b32950c2ca2f2db6deda0253081e4cdda1d9f59696182c5482328b9f4"
 dependencies = [
  "futures",
  "hyper 0.13.10",
