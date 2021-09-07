@@ -8,11 +8,14 @@ use std::env;
 use std::error::Error;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<()> {
     let api_key = env::var("API_KEY")?;
     let mut api = SkyblockApi::singleton(&api_key);
 
-    let futa = api.get_active_auctions();
+    // api.iter_active_auctions(api);
+    // let mut test = "";
+    let mut t: std::ops::Fn<Auction>;
+    let futa = api.iter_active_auctions(&t);
 
     let auctions = futa.await?;
 

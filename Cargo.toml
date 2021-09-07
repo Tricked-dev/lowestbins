@@ -6,14 +6,17 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-fastnbt = "1"
-base64 = "0.13.0"
-serde = "1.0.130"
-skyblock-rs = "0.2.1"
+# fastnbt = "1"
+# base64 = "0.12.0"
+# serde = "1.0.130"
+skyblock-rs = "0.2.5"
 serde_json="*"
-hematite-nbt = "0.5.2"
-hyper = { version = "0.14", features = ["full"] }
+# hematite-nbt = "0.4.0"
+# hyper = { version = "0.14", features = ["full"] }
 tokio = { version = "1", features = ["full"] }
-pretty_env_logger = "0.4"
-tokio-util = "0.6.8"
-skedge = "0.0.4"
+# pretty_env_logger = "0.4"
+# hyper-tls= "0.4"
+# futures="0.3"
+# serde_derive="1.0"
+# tokio-util = "0.6.8"
+# skedge = "0.0.4"
