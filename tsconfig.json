@@ -1,0 +1,37 @@
+{
+	"compilerOptions": {
+		"strict": false,
+		"alwaysStrict": false,
+		"noImplicitAny": false,
+		"noImplicitThis": false,
+		"strictNullChecks": false,
+		"strictBindCallApply": false,
+		"strictFunctionTypes": false,
+		"strictPropertyInitialization": false,
+		"module": "commonjs",
+		"target": "ESNext",
+		"outDir": "dist",
+		"lib": [
+			"es2016",
+			"ES2017",
+			"ESNext",
+			"ESNext.Array",
+			"ESNext.AsyncIterable",
+			"ESNext.Intl",
+			"ESNext.Symbol",
+			"DOM"
+		],
+		"sourceMap": false,
+		"incremental": true,
+		"inlineSources": true,
+		"esModuleInterop": true,
+		"inlineSourceMap": true,
+		"emitDecoratorMetadata": true,
+		"importHelpers": true,
+		"forceConsistentCasingInFileNames": true,
+		"experimentalDecorators": true,
+		"baseUrl": "./"
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules"]
+}

@@ -1,0 +1,21 @@
+{
+	"scripts": {
+		"bundle": "esbuild ts/src/index.ts --outfile=lowestbins.js --platform=node --target=es2020 --format=cjs --minify --bundle",
+		"release": "cargo build --release",
+		"done": "yarn release && yarn bundle",
+		"start": "chmod +777 lowestbins && ./lowestbins"
+	},
+	"dependencies": {
+		"@types/fs-extra": "^9.0.12",
+		"@types/node": "^16.7.10",
+		"@zikeji/hypixel": "^3.1.1",
+		"axios": "^0.21.4",
+		"axios-retry": "^3.1.9",
+		"esbuild": "^0.12.25",
+		"fast-json-stringify": "^2.7.9",
+		"fs-extra": "^10.0.0",
+		"lodash": "^4.17.21",
+		"prismarine-nbt": "^1.6.0",
+		"typescript": "^4.4.2"
+	}
+}
