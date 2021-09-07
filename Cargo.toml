@@ -4,11 +4,14 @@ version = "0.1.0"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies.skyblock-rs]
+path="./skyblock-rs"
+
 
 [dependencies]
 serde = "1.0.130"
 serde_json="*"
 hyper = { version = "0.14", features = ["full"] }
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "0.2", features = ["full"] }
 pretty_env_logger = "0.4"
 tokio-util = "0.6.8"
