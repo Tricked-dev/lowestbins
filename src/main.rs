@@ -14,15 +14,19 @@ async fn main() -> Result<()> {
 
     let mut vec: Vec<Auction> = Vec::new();
     let futa = api.iter_active_auctions(|auction| {
-        vec.push(auction);
+        vec.push(auction.clone());
         Ok(())
     });
 
-    let auctions = futa.await?;
+    let auctions = futa.await.unwrap_or_else(|error| {
+        eprintln!("Error {}", error);
+    });
 
-    let json = serde_json::to_string_pretty(&auctions)?;
-
-    println!("{}", json);
+    // let json = serde_json::to_string_pretty(&auctions)?;
+    // let v = vec.push(auctions.clone());
+    // println!("{:#?}", v);
+    println!("{:#?}", auctions);
+    println!("{:#?}", vec);
 
     Ok(())
 }
