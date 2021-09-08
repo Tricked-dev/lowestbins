@@ -435,8 +435,10 @@ name = "lowestbins"
 version = "0.1.0"
 dependencies = [
  "base64",
+ "flate2",
  "hematite-nbt",
  "hyper",
+ "nbtrs",
  "pretty_env_logger",
  "reqwest",
  "serde",
@@ -512,6 +514,15 @@ dependencies = [
  "security-framework",
  "security-framework-sys",
  "tempfile",
+]
+
+[[package]]
+name = "nbtrs"
+version = "0.1.1"
+source = "git+https://github.com/overviewer/nbtrs#abd80daf4ffb821489628274008da213d5964671"
+dependencies = [
+ "byteorder",
+ "flate2",
 ]
 
 [[package]]

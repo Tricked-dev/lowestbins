@@ -1,6 +1,12 @@
+use flate2::read::GzDecoder;
+use nbtrs::Tag;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
+use std::str;
+
+mod a;
+use a::Item;
 extern crate base64;
 
 #[derive(Serialize, Deserialize)]
@@ -21,7 +27,7 @@ pub struct HypixelResponse {
     last_updated: i64,
 
     #[serde(rename = "auctions")]
-    auctions: Vec<Auction>,
+    auctions: Vec<Item>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -163,33 +169,46 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for auction in r.auctions {
         if let Some(true) = auction.bin {
-            let r = auctions.get(&auction.item_name);
+            let r = auctions.get(&auction.name);
+            let id = auction.to_nbt().unwrap().i[0]
+                .tag
+                .extra_attributes
+                .id
+                .clone();
             match r {
                 Some(s) => {
                     if s > &auction.starting_bid {
-                        auctions.insert(auction.item_name, auction.starting_bid);
+                        auctions.insert(id, auction.starting_bid);
                     };
                 }
                 None => {
-                    auctions.insert(auction.item_name, auction.starting_bid);
+                    auctions.insert(id, auction.starting_bid);
                 }
             }
-            // if r > &auction.starting_bid {
-            //     println!("{} > {}", auction.starting_bid, r);
-            //     auctions.insert(auction.item_name, auction.starting_bid);
-            // }
         }
     }
-    // for auction in auctions {
-    //     book_reviews.insert(auction.item_name, auction.starting_bid);
-    //     // println!("{}", hematite_nbt::decode(auction.item_bytes))
-    //     // let bytes = base64::decode(auction.item_bytes).unwrap();
-    //     // println!("{:?}", String::from_utf8_lossy(&bytes));
-    //     // println!("{}", auction.item_bytes)
+    // for a in 2..r.total_pages {
+    //     println!("{}", a);
+    //     let page = format!("https://api.hypixel.net/skyblock/auctions?page={}", a);
+    //     let resp = reqwest::get(page).await?.json::<HypixelResponse>().await?;
+    //     let r: HypixelResponse = resp;
+    //     for auction in r.auctions {
+    //         if let Some(true) = auction.bin {
+    //             let r = auctions.get(&auction.item_name);
+    //             match r {
+    //                 Some(s) => {
+    //                     if s > &auction.starting_bid {
+    //                         auctions.insert(auction.item_name, auction.starting_bid);
+    //                     };
+    //                 }
+    //                 None => {
+    //                     auctions.insert(auction.item_name, auction.starting_bid);
+    //                 }
+    //             }
+    //         }
+    //     }
     // }
-    // to_writer("bins.json", &book_reviews)?;
     let xs = serde_json::to_string(&auctions).unwrap();
-    fs::write("bins.json", xs)?;
-    // println!("{:#?}", auctions);
+    fs::write("lowestbins.json", xs)?;
     Ok(())
 }
