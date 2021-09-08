@@ -152,8 +152,8 @@ pub enum Tier {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut auctions: Vec<Auction> = Vec::new();
-    let mut book_reviews: HashMap<String, i64> = HashMap::new();
+    // let mut auctions: Vec<Auction> = Vec::new();
+    let mut auctions: HashMap<String, i64> = HashMap::new();
 
     let resp = reqwest::get("https://api.hypixel.net/skyblock/auctions?page=1")
         .await?
@@ -163,19 +163,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for auction in r.auctions {
         if let Some(true) = auction.bin {
-            auctions.push(auction);
+            let r = auctions.get(&auction.item_name);
+            match r {
+                Some(s) => {
+                    if s > &auction.starting_bid {
+                        auctions.insert(auction.item_name, auction.starting_bid);
+                    };
+                }
+                None => {
+                    auctions.insert(auction.item_name, auction.starting_bid);
+                }
+            }
+            // if r > &auction.starting_bid {
+            //     println!("{} > {}", auction.starting_bid, r);
+            //     auctions.insert(auction.item_name, auction.starting_bid);
+            // }
         }
     }
-    for auction in auctions {
-        book_reviews.insert(auction.item_name, auction.starting_bid);
-        // println!("{}", hematite_nbt::decode(auction.item_bytes))
-        // let bytes = base64::decode(auction.item_bytes).unwrap();
-        // println!("{:?}", String::from_utf8_lossy(&bytes));
-        // println!("{}", auction.item_bytes)
-    }
+    // for auction in auctions {
+    //     book_reviews.insert(auction.item_name, auction.starting_bid);
+    //     // println!("{}", hematite_nbt::decode(auction.item_bytes))
+    //     // let bytes = base64::decode(auction.item_bytes).unwrap();
+    //     // println!("{:?}", String::from_utf8_lossy(&bytes));
+    //     // println!("{}", auction.item_bytes)
+    // }
     // to_writer("bins.json", &book_reviews)?;
-    let xs = serde_json::to_string(&book_reviews).unwrap();
+    let xs = serde_json::to_string(&auctions).unwrap();
     fs::write("bins.json", xs)?;
-    println!("{:#?}", book_reviews);
+    // println!("{:#?}", auctions);
     Ok(())
 }
