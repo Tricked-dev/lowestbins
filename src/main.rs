@@ -1,6 +1,7 @@
-use std::collections::HashMap;
-
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fs;
+extern crate base64;
 
 #[derive(Serialize, Deserialize)]
 pub struct HypixelResponse {
@@ -151,11 +152,30 @@ pub enum Tier {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut auctions: Vec<Auction> = Vec::new();
+    let mut book_reviews: HashMap<String, i64> = HashMap::new();
+
     let resp = reqwest::get("https://api.hypixel.net/skyblock/auctions?page=1")
         .await?
         .json::<HypixelResponse>()
         .await?;
     let r: HypixelResponse = resp;
-    println!("{:#?}", r.auctions);
+
+    for auction in r.auctions {
+        if let Some(true) = auction.bin {
+            auctions.push(auction);
+        }
+    }
+    for auction in auctions {
+        book_reviews.insert(auction.item_name, auction.starting_bid);
+        // println!("{}", hematite_nbt::decode(auction.item_bytes))
+        // let bytes = base64::decode(auction.item_bytes).unwrap();
+        // println!("{:?}", String::from_utf8_lossy(&bytes));
+        // println!("{}", auction.item_bytes)
+    }
+    // to_writer("bins.json", &book_reviews)?;
+    let xs = serde_json::to_string(&book_reviews).unwrap();
+    fs::write("bins.json", xs)?;
+    println!("{:#?}", book_reviews);
     Ok(())
 }
