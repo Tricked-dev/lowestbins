@@ -184,7 +184,41 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             if id == "ENCHANTED_BOOK" {
                 match &nbt.tag.extra_attributes.enchantments {
                     Some(x) => {
-                        // id = format!("PET-{}-{}", v.pet_type, v.tier);
+                        if x.len() == 1 {
+                            for (key, val) in x.iter() {
+                                id = format!("ENCHANTED_BOOK-{}-{}", key.to_ascii_uppercase(), val);
+                            }
+                        }
+                    }
+                    None => {}
+                }
+            }
+            if id == "POTION" {
+                match &nbt.tag.extra_attributes.potion {
+                    Some(x) => match &nbt.tag.extra_attributes.potion_level {
+                        Some(y) => match &nbt.tag.extra_attributes.enhanced {
+                            Some(_) => {
+                                id = format!("POTION-{}-{}-ENHANCED", x, y);
+                            }
+                            None => {
+                                id = format!("POTION-{}-{}", x, y);
+                            }
+                        },
+                        None => {
+                            id = format!("POTION-{}", x);
+                        }
+                    },
+                    None => {}
+                }
+            }
+            if id == "RUNE" {
+                match &nbt.tag.extra_attributes.runes {
+                    Some(x) => {
+                        if x.len() == 1 {
+                            for (key, val) in x.iter() {
+                                id = format!("RUNE-{}-{}", key.to_ascii_uppercase(), val);
+                            }
+                        }
                     }
                     None => {}
                 }
@@ -202,27 +236,84 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
-    // for a in 2..r.total_pages {
-    //     println!("{}", a);
-    //     let page = format!("https://api.hypixel.net/skyblock/auctions?page={}", a);
-    //     let resp = reqwest::get(page).await?.json::<HypixelResponse>().await?;
-    //     let r: HypixelResponse = resp;
-    //     for auction in r.auctions {
-    //         if let Some(true) = auction.bin {
-    //             let r = auctions.get(&auction.item_name);
-    //             match r {
-    //                 Some(s) => {
-    //                     if s > &auction.starting_bid {
-    //                         auctions.insert(auction.item_name, auction.starting_bid);
-    //                     };
-    //                 }
-    //                 None => {
-    //                     auctions.insert(auction.item_name, auction.starting_bid);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
+    for a in 2..r.total_pages {
+        // println!("{}", a);
+        let page = format!("https://api.hypixel.net/skyblock/auctions?page={}", a);
+        let resp = reqwest::get(page).await?.json::<HypixelResponse>().await?;
+        let r: HypixelResponse = resp;
+        for auction in r.auctions {
+            if let Some(true) = auction.bin {
+                let r = auctions.get(&auction.name);
+                let nbt = &auction.to_nbt().unwrap().i[0];
+                let mut id = nbt.tag.extra_attributes.id.clone();
+                let count = nbt.count;
+                match &nbt.tag.extra_attributes.pet {
+                    Some(x) => {
+                        let v: Pet = serde_json::from_str(x)?;
+                        id = format!("PET-{}-{}", v.pet_type, v.tier);
+                    }
+                    None => {}
+                }
+                if id == "ENCHANTED_BOOK" {
+                    match &nbt.tag.extra_attributes.enchantments {
+                        Some(x) => {
+                            if x.len() == 1 {
+                                for (key, val) in x.iter() {
+                                    id = format!(
+                                        "ENCHANTED_BOOK-{}-{}",
+                                        key.to_ascii_uppercase(),
+                                        val
+                                    );
+                                }
+                            }
+                        }
+                        None => {}
+                    }
+                }
+                if id == "POTION" {
+                    match &nbt.tag.extra_attributes.potion {
+                        Some(x) => match &nbt.tag.extra_attributes.potion_level {
+                            Some(y) => match &nbt.tag.extra_attributes.enhanced {
+                                Some(_) => {
+                                    id = format!("POTION-{}-{}-ENHANCED", x, y);
+                                }
+                                None => {
+                                    id = format!("POTION-{}-{}", x, y);
+                                }
+                            },
+                            None => {
+                                id = format!("POTION-{}", x);
+                            }
+                        },
+                        None => {}
+                    }
+                }
+                if id == "RUNE" {
+                    match &nbt.tag.extra_attributes.runes {
+                        Some(x) => {
+                            if x.len() == 1 {
+                                for (key, val) in x.iter() {
+                                    id = format!("RUNE-{}-{}", key.to_ascii_uppercase(), val);
+                                }
+                            }
+                        }
+                        None => {}
+                    }
+                }
+                // println!("{} nbt.tag.countT", nbt.tag.Count);
+                match r {
+                    Some(s) => {
+                        if s > &auction.starting_bid {
+                            auctions.insert(id, auction.starting_bid / count);
+                        };
+                    }
+                    None => {
+                        auctions.insert(id, auction.starting_bid / count);
+                    }
+                }
+            }
+        }
+    }
     let xs = serde_json::to_string(&auctions).unwrap();
     fs::write("lowestbins.json", xs)?;
     Ok(())
