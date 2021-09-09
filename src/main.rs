@@ -7,6 +7,7 @@ use std::str;
 
 mod a;
 use a::Item;
+use a::Pet;
 extern crate base64;
 
 #[derive(Serialize, Deserialize)]
@@ -170,19 +171,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for auction in r.auctions {
         if let Some(true) = auction.bin {
             let r = auctions.get(&auction.name);
-            let id = auction.to_nbt().unwrap().i[0]
-                .tag
-                .extra_attributes
-                .id
-                .clone();
+            let nbt = &auction.to_nbt().unwrap().i[0];
+            let mut id = nbt.tag.extra_attributes.id.clone();
+            let count = nbt.count;
+            match &nbt.tag.extra_attributes.pet {
+                Some(x) => {
+                    let v: Pet = serde_json::from_str(x)?;
+                    id = format!("PET-{}-{}", v.pet_type, v.tier);
+                }
+                None => {}
+            }
+            if id == "ENCHANTED_BOOK" {
+                match &nbt.tag.extra_attributes.enchantments {
+                    Some(x) => {
+                        // id = format!("PET-{}-{}", v.pet_type, v.tier);
+                    }
+                    None => {}
+                }
+            }
+            // println!("{} nbt.tag.countT", nbt.tag.Count);
             match r {
                 Some(s) => {
                     if s > &auction.starting_bid {
-                        auctions.insert(id, auction.starting_bid);
+                        auctions.insert(id, auction.starting_bid / count);
                     };
                 }
                 None => {
-                    auctions.insert(id, auction.starting_bid);
+                    auctions.insert(id, auction.starting_bid / count);
                 }
             }
         }
