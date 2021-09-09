@@ -4,10 +4,12 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::str;
+mod server;
+use server::start_server;
 
-mod a;
-use a::Item;
-use a::Pet;
+mod item;
+use item::Item;
+use item::Pet;
 extern crate base64;
 
 #[derive(Serialize, Deserialize)]
@@ -315,6 +317,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     let xs = serde_json::to_string(&auctions).unwrap();
+    println!("writing file");
     fs::write("lowestbins.json", xs)?;
+    start_server().await;
+
     Ok(())
 }
