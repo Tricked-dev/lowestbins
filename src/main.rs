@@ -1,13 +1,10 @@
-use flate2::read::GzDecoder;
-use nbtrs::Tag;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::str;
 
-mod a;
-use a::Item;
-use a::Pet;
+use lowestbins::nbt_utils::Item;
+use lowestbins::nbt_utils::Pet;
 extern crate base64;
 
 #[derive(Serialize, Deserialize)]

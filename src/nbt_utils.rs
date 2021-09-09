@@ -1,8 +1,9 @@
-use nbt::from_gzip_reader;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io;
 use std::result::Result as StdResult;
+
+use nbt::from_gzip_reader;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 pub struct PartialNbt {
@@ -131,7 +132,7 @@ impl Item {
             }
         }
 
-        return None;
+        None
     }
 }
 
@@ -147,7 +148,7 @@ impl Into<String> for ItemBytes {
         match self {
             Self::T0(ibt0) => {
                 let ItemBytesT0::Data(x) = ibt0;
-                return x;
+                x
             }
             Self::Data(x) => x,
         }
