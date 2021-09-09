@@ -1,16 +1,11 @@
-use flate2::read::GzDecoder;
-use nbtrs::Tag;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::str;
-mod server;
-use server::start_server;
 
-mod item;
-use item::Item;
-use item::Pet;
-extern crate base64;
+use lowestbins::nbt_utils::Item;
+use lowestbins::nbt_utils::Pet;
+use lowestbins::server::start_server;
 
 #[derive(Serialize, Deserialize)]
 pub struct HypixelResponse {
@@ -31,132 +26,6 @@ pub struct HypixelResponse {
 
     #[serde(rename = "auctions")]
     auctions: Vec<Item>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct Auction {
-    #[serde(rename = "uuid")]
-    uuid: String,
-
-    #[serde(rename = "auctioneer")]
-    auctioneer: String,
-
-    #[serde(rename = "profile_id")]
-    profile_id: String,
-
-    #[serde(rename = "coop")]
-    coop: Vec<String>,
-
-    #[serde(rename = "start")]
-    start: i64,
-
-    #[serde(rename = "end")]
-    end: i64,
-
-    #[serde(rename = "item_name")]
-    item_name: String,
-
-    #[serde(rename = "item_lore")]
-    item_lore: String,
-
-    #[serde(rename = "extra")]
-    extra: String,
-
-    #[serde(rename = "category")]
-    category: Category,
-
-    #[serde(rename = "tier")]
-    tier: Tier,
-
-    #[serde(rename = "starting_bid")]
-    starting_bid: i64,
-
-    #[serde(rename = "item_bytes")]
-    item_bytes: String,
-
-    #[serde(rename = "claimed")]
-    claimed: bool,
-
-    #[serde(rename = "claimed_bidders")]
-    claimed_bidders: Vec<Option<serde_json::Value>>,
-
-    #[serde(rename = "highest_bid_amount")]
-    highest_bid_amount: i64,
-
-    #[serde(rename = "bin")]
-    bin: Option<bool>,
-
-    #[serde(rename = "bids")]
-    bids: Vec<Bid>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct Bid {
-    #[serde(rename = "auction_id")]
-    auction_id: String,
-
-    #[serde(rename = "bidder")]
-    bidder: String,
-
-    #[serde(rename = "profile_id")]
-    profile_id: String,
-
-    #[serde(rename = "amount")]
-    amount: i64,
-
-    #[serde(rename = "timestamp")]
-    timestamp: i64,
-}
-
-#[derive(Serialize, Deserialize)]
-pub enum Category {
-    #[serde(rename = "accessories")]
-    Accessories,
-
-    #[serde(rename = "armor")]
-    Armor,
-
-    #[serde(rename = "blocks")]
-    Blocks,
-
-    #[serde(rename = "consumables")]
-    Consumables,
-
-    #[serde(rename = "misc")]
-    Misc,
-
-    #[serde(rename = "weapon")]
-    Weapon,
-}
-
-#[derive(Serialize, Deserialize)]
-pub enum Tier {
-    #[serde(rename = "COMMON")]
-    Common,
-
-    #[serde(rename = "EPIC")]
-    Epic,
-
-    #[serde(rename = "LEGENDARY")]
-    Legendary,
-
-    #[serde(rename = "MYTHIC")]
-    Mythic,
-
-    #[serde(rename = "RARE")]
-    Rare,
-
-    #[serde(rename = "SPECIAL")]
-    Special,
-
-    #[serde(rename = "SUPREME")]
-    Supreme,
-
-    #[serde(rename = "UNCOMMON")]
-    Uncommon,
-
-    #[serde(rename = "VERY_SPECIAL")]
-    VerySpecial,
 }
 
 #[tokio::main]

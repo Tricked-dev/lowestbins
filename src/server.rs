@@ -26,7 +26,6 @@ pub async fn start_server() {
 }
 
 async fn response_examples(req: Request<Body>) -> Result<Response<Body>> {
-    println!("Request");
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/lowestbins.json") | (&Method::GET, "/lowestbins") => {
             println!("/ GET");
