@@ -1,5 +1,5 @@
 use hyper::service::{make_service_fn, service_fn};
-use hyper::{header, Body, Method, Request, Response, Result, Server, StatusCode};
+use hyper::{header, Body, Method, Request, Response, Result, Server};
 use tokio::fs::File;
 use tokio_util::codec::{BytesCodec, FramedRead};
 
@@ -37,7 +37,7 @@ async fn response_examples(req: Request<Body>) -> Result<Response<Body>> {
 /// HTTP status code 404
 fn not_found() -> Response<Body> {
     Response::builder()
-        .status(StatusCode::NOT_FOUND)
+        // .status(StatusCode::NOT_FOUND)
         .body(NOTFOUND.into())
         .unwrap()
 }
