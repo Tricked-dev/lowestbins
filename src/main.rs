@@ -5,7 +5,7 @@ use tokio::time::Duration;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // fetch_auctions().await;
+    fetch_auctions().await;
 
     set_interval(
         || async {
