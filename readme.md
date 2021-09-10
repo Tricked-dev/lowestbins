@@ -2,6 +2,11 @@
 
 Lowest bins but made in rust fetching all the lowest bins takes like 17 seconds with 200ms request delays.
 
+## Building
+
+- If your on linux you can go to the releases and download the binary
+- windows/macos: you need to install cargo and run cargo build --release and the exe/dmg should be in the target/release/ folder.
+
 ## features
 
 - NBT parsing
