@@ -1,3 +1,4 @@
+use crate::bazaar::get as get_bazaar;
 use crate::util::{get, parse_hypixel};
 use std::collections::HashMap;
 use std::fs;
@@ -23,6 +24,12 @@ pub async fn fetch_auctions() {
             now.elapsed().as_millis()
         );
     }
+    let r = get_bazaar().await;
+    let prods = r.products;
+    for (key, val) in prods.iter() {
+        auctions.insert(key.to_string(), val.quick_status.buy_price.round() as i64);
+    }
+
     let xs = serde_json::to_string(&auctions).unwrap();
     println!("writing file");
     println!("!! Total time taken {}", started.elapsed().as_secs());
