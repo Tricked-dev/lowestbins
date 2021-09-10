@@ -2,6 +2,8 @@ use crate::nbt_utils::{Item, Pet};
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::future::Future;
+use tokio::time::{self, Duration};
 
 #[derive(Serialize, Deserialize)]
 pub struct HypixelResponse {
@@ -100,8 +102,6 @@ pub fn parse_hypixel(auctions: Vec<Item>, mut map: HashMap<String, i64>) -> Hash
                 _ => {}
             }
             let r = map.get(&id);
-            println!("{}", &id);
-            // println!("{} nbt.tag.countT", nbt.tag.Count);
             match r {
                 Some(s) => {
                     if s > &auction.starting_bid {
@@ -115,4 +115,23 @@ pub fn parse_hypixel(auctions: Vec<Item>, mut map: HashMap<String, i64>) -> Hash
         }
     }
     map
+}
+
+pub fn set_interval<F, Fut>(mut f: F, dur: Duration)
+where
+    F: Send + 'static + FnMut() -> Fut,
+    Fut: Future<Output = ()> + Send + 'static,
+{
+    // Create stream of intervals.
+    let mut interval = time::interval(dur);
+    tokio::spawn(async move {
+        // Skip the first tick at 0ms.
+        interval.tick().await;
+        loop {
+            // Wait until next tick.
+            interval.tick().await;
+            // Spawn a task for this tick.
+            tokio::spawn(f());
+        }
+    });
 }

@@ -1,24 +1,19 @@
-use std::collections::HashMap;
-use std::fs;
-
+use lowestbins::fetch::fetch_auctions;
 use lowestbins::server::start_server;
-use lowestbins::util::{get, parse_hypixel};
+use lowestbins::util::set_interval;
+use tokio::time::Duration;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // let mut auctions: Vec<Auction> = Vec::new();
-    let mut auctions: HashMap<String, i64> = HashMap::new();
+    // fetch_auctions().await;
 
-    let r = get(1).await;
-    auctions = parse_hypixel(r.auctions, auctions);
-    for a in 2..r.total_pages {
-        let r = get(a).await;
-        auctions = parse_hypixel(r.auctions, auctions);
-    }
-    let xs = serde_json::to_string(&auctions).unwrap();
-    println!("writing file");
-    fs::write("lowestbins.json", xs)?;
+    set_interval(
+        || async {
+            fetch_auctions().await;
+        },
+        Duration::from_millis(300000),
+    );
+
     start_server().await;
-
     Ok(())
 }

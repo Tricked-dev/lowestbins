@@ -26,9 +26,10 @@ pub async fn start_server() {
 }
 
 async fn response_examples(req: Request<Body>) -> Result<Response<Body>> {
+    println!("{} {}", req.method(), req.uri().path());
+
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/lowestbins.json") | (&Method::GET, "/lowestbins") => {
-            println!("/ GET");
             // Response::builder().header(header::CONTENT_TYPE, "application/json").body(simple_file_send(INDEX));
             simple_file_send(INDEX).await
         }
