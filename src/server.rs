@@ -1,5 +1,3 @@
-#![deny(warnings)]
-
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{header, Body, Method, Request, Response, Result, Server, StatusCode};
 use tokio::fs::File;
@@ -30,7 +28,6 @@ async fn response_examples(req: Request<Body>) -> Result<Response<Body>> {
 
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/lowestbins.json") | (&Method::GET, "/lowestbins") => {
-            // Response::builder().header(header::CONTENT_TYPE, "application/json").body(simple_file_send(INDEX));
             simple_file_send(INDEX).await
         }
         _ => Ok(not_found()),

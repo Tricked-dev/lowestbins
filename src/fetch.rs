@@ -2,6 +2,7 @@ use crate::util::{get, parse_hypixel};
 use std::collections::HashMap;
 use std::fs;
 use std::time::Instant;
+
 pub async fn fetch_auctions() {
     let started = Instant::now();
 
