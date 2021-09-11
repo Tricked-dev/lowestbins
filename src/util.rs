@@ -1,10 +1,9 @@
+use crate::http_client::HTTP_CLIENT;
 use crate::nbt_utils::{Item, Pet};
-use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::future::Future;
 use tokio::time::{self, Duration};
-
 #[derive(Serialize, Deserialize)]
 pub struct HypixelResponse {
     #[serde(rename = "success")]
@@ -24,14 +23,6 @@ pub struct HypixelResponse {
 
     #[serde(rename = "auctions")]
     pub auctions: Vec<Item>,
-}
-
-lazy_static! {
-    static ref HTTP_CLIENT: reqwest::Client = reqwest::Client::builder()
-        .gzip(true)
-        .brotli(true)
-        .build()
-        .unwrap();
 }
 
 pub async fn get(page: i64) -> HypixelResponse {

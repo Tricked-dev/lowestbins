@@ -1,15 +1,8 @@
+use crate::http_client::HTTP_CLIENT;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
-
-lazy_static! {
-    static ref HTTP_CLIENT: reqwest::Client = reqwest::Client::builder()
-        .gzip(true)
-        .brotli(true)
-        .build()
-        .unwrap();
-}
 
 #[derive(Serialize, Deserialize)]
 pub struct BazaarResponse {
