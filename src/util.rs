@@ -76,14 +76,14 @@ pub fn parse_hypixel(auctions: Vec<Item>, mut map: HashMap<String, i64>) -> Hash
                     Some(x) => match &nbt.tag.extra_attributes.potion_level {
                         Some(y) => match &nbt.tag.extra_attributes.enhanced {
                             Some(_) => {
-                                id = format!("POTION-{}-{}-ENHANCED", x, y);
+                                id = format!("POTION-{}-{}-ENHANCED", x.to_ascii_uppercase(), y);
                             }
                             None => {
-                                id = format!("POTION-{}-{}", x, y);
+                                id = format!("POTION-{}-{}", x.to_ascii_uppercase(), y);
                             }
                         },
                         None => {
-                            id = format!("POTION-{}", x);
+                            id = format!("POTION-{}", x.to_ascii_uppercase());
                         }
                     },
                     None => {}
