@@ -1,5 +1,7 @@
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{header, Body, Method, Request, Response, Result, Server};
+use log::{error, info};
+use substring::Substring;
 use tokio::fs::File;
 use tokio_util::codec::{BytesCodec, FramedRead};
 
@@ -7,8 +9,6 @@ static INDEX: &str = "lowestbins.json";
 static NOTFOUND: &[u8] = b"Not Found";
 
 pub async fn start_server() {
-    pretty_env_logger::init();
-
     let addr = "127.0.0.1:1337".parse().unwrap();
 
     let make_service =
@@ -16,15 +16,16 @@ pub async fn start_server() {
 
     let server = Server::bind(&addr).serve(make_service);
 
+    info!("Listening on http://{}", addr);
     println!("Listening on http://{}", addr);
 
     if let Err(e) = server.await {
-        eprintln!("server error: {}", e);
+        error!("server error: {}", e);
     }
 }
 
 async fn response_examples(req: Request<Body>) -> Result<Response<Body>> {
-    println!("{} {}", req.method(), req.uri().path());
+    info!("{} {}", req.method(), req.uri().path().substring(0, 30));
 
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/lowestbins.json") | (&Method::GET, "/lowestbins") => {
