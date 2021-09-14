@@ -77,6 +77,8 @@ pub enum Rarity {
     VerySpecial,
     #[serde(rename = "SUPREME")]
     Supreme,
+    #[serde(rename = "DIVINE")]
+    Divine,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
