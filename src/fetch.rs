@@ -3,13 +3,11 @@ use crate::util::{get, parse_hypixel};
 use crate::AUCTIONS;
 use anyhow::Result;
 use futures::{stream, StreamExt};
-use log::info;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
 pub async fn fetch_auctions() -> Result<()> {
-    info!("fetching auctions");
     let started = Instant::now();
 
     let r = get(1).await?;
@@ -65,7 +63,6 @@ pub async fn fetch_auctions() -> Result<()> {
             };
         })
         .await;
-    info!("fetching bazaar");
     let r = get_bazaar().await?;
     let prods = r.products;
     for (key, val) in prods.iter() {
@@ -81,8 +78,8 @@ pub async fn fetch_auctions() -> Result<()> {
     drop(prods);
 
     println!("!! Total time taken {}", started.elapsed().as_secs());
-    info!("!! Total time taken {}", started.elapsed().as_secs());
-    AUCTIONS.store(Arc::new(xs));
+    let mut auc = AUCTIONS.lock().unwrap();
+    *auc = xs;
 
     Ok(())
 }

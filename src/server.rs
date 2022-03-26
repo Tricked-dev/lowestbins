@@ -1,7 +1,5 @@
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{header, Body, Method, Request, Response, Result, Server};
-use log::{error, info};
-use substring::Substring;
 
 use crate::AUCTIONS;
 
@@ -15,22 +13,19 @@ pub async fn start_server() -> Result<()> {
 
     let server = Server::bind(&addr).serve(make_service);
 
-    info!("Listening on http://{}", addr);
     println!("Listening on http://{}", addr);
 
     if let Err(e) = server.await {
-        error!("server error: {}", e);
+        eprintln!("server error: {}", e);
     }
 
     Ok(())
 }
 
 async fn response_examples(req: Request<Body>) -> Result<Response<Body>> {
-    info!("{} {}", req.method(), req.uri().path().substring(0, 30));
-
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/lowestbins.json") | (&Method::GET, "/lowestbins") => {
-            let bytes = (&**AUCTIONS.load()).clone().into_bytes();
+            let bytes = (*AUCTIONS.lock().unwrap()).clone().into_bytes();
             Ok(Response::builder()
                 .header(header::CONTENT_TYPE, "application/json")
                 .body(Body::from(bytes))
