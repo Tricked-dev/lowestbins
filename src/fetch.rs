@@ -2,9 +2,8 @@ use crate::bazaar::get as get_bazaar;
 use crate::util::{get, parse_hypixel};
 use crate::AUCTIONS;
 use futures::{stream, StreamExt};
-use log::{debug, info};
+use log::info;
 use std::collections::HashMap;
-use std::fs;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
@@ -40,7 +39,7 @@ pub async fn fetch_auctions() {
     bodies
         .for_each(|res: HashMap<String, i64>| async {
             let auction_clone = auctions.clone();
-            let handle = async move {
+            async move {
                 let mut auctions = auction_clone.lock().unwrap();
                 for (x, y) in res.iter() {
                     match auctions.get(x) {
@@ -55,11 +54,10 @@ pub async fn fetch_auctions() {
                     }
                 }
                 drop(auctions);
-            };
-            handle.await;
+            }
+            .await;
         })
         .await;
-    // bodies.for_each(|res| async {}).await;
     info!("fetching bazaar");
     let r = get_bazaar().await;
     let prods = r.products;
@@ -71,10 +69,11 @@ pub async fn fetch_auctions() {
             .insert(key.to_string(), val.quick_status.buy_price.round() as i64);
     }
 
-    // let xs = serde_json::to_string(&*auctions.lock().unwrap()).unwrap();
-    // debug!("writing file");
+    let xs = serde_json::to_string(&*auctions.lock().unwrap()).unwrap();
+    drop(auctions);
+    drop(prods);
+
     println!("!! Total time taken {}", started.elapsed().as_secs());
     info!("!! Total time taken {}", started.elapsed().as_secs());
-    AUCTIONS.store(Arc::new(auctions.lock().unwrap().clone()));
-    // fs::write("lowestbins.json", xs).unwrap();
+    AUCTIONS.store(Arc::new(xs));
 }

@@ -28,9 +28,7 @@ async fn response_examples(req: Request<Body>) -> Result<Response<Body>> {
 
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/lowestbins.json") | (&Method::GET, "/lowestbins") => {
-            let bytes = serde_json::to_string(&**AUCTIONS.load())
-                .unwrap()
-                .into_bytes();
+            let bytes = (&**AUCTIONS.load()).clone().into_bytes();
             Ok(Response::builder()
                 .header(header::CONTENT_TYPE, "application/json")
                 .body(Body::from(bytes))

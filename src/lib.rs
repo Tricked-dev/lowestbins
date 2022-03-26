@@ -6,8 +6,8 @@ pub mod server;
 pub mod util;
 
 use arc_swap::ArcSwap;
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 lazy_static::lazy_static! {
-    static ref AUCTIONS: ArcSwap<HashMap<String, i64>> = ArcSwap::new(Arc::new(HashMap::new()));
+    static ref AUCTIONS: ArcSwap<String> = ArcSwap::new(Arc::new(String::new()));
 }
