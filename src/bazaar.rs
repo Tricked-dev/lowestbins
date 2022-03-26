@@ -1,5 +1,4 @@
 use crate::http_client::HTTP_CLIENT;
-use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
@@ -73,11 +72,13 @@ pub struct QuickStatus {
     buy_orders: i64,
 }
 pub async fn get() -> BazaarResponse {
-    let res = HTTP_CLIENT
+    let text = HTTP_CLIENT
         .get("https://api.hypixel.net/skyblock/bazaar")
         .send()
         .await
+        .unwrap()
+        .body_string()
+        .await
         .unwrap();
-    let text = res.text().await.unwrap();
     serde_json::from_str(&text).unwrap()
 }

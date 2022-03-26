@@ -27,7 +27,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         || async {
             fetch_auctions().await;
         },
-        Duration::from_millis(300000),
+        Duration::from_secs(20),
     );
 
     start_server().await;

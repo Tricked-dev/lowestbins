@@ -26,15 +26,17 @@ pub struct HypixelResponse {
 }
 
 pub async fn get(page: i64) -> HypixelResponse {
-    let res = HTTP_CLIENT
+    let text = HTTP_CLIENT
         .get(format!(
             "https://api.hypixel.net/skyblock/auctions?page={}",
             page
         ))
         .send()
         .await
+        .unwrap()
+        .body_string()
+        .await
         .unwrap();
-    let text = res.text().await.unwrap();
     serde_json::from_str(&text).unwrap()
 }
 
