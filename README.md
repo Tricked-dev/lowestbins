@@ -1,6 +1,6 @@
 # Lowestbins-rs
 
-Lowest bins but made in rust fetching all the lowest bins takes like 17 seconds with 200ms request delays.
+A fast and effecient lowestbins implementation this uses parrallel requests to fetch all lowestbins in less than **5 SECONDS** and uses the hyper server allowing for practically unlimited requests per second while only using 50mb of ram!
 
 ## Building
 
