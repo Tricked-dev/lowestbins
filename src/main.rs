@@ -12,24 +12,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         WriteLogger::new(
             LevelFilter::Info,
             Config::default(),
-            File::create("info.log").unwrap(),
+            File::create("info.log")?,
         ),
         WriteLogger::new(
             LevelFilter::Debug,
             Config::default(),
-            File::create("debug.log").unwrap(),
+            File::create("debug.log")?,
         ),
-    ])
-    .unwrap();
-    fetch_auctions().await;
+    ])?;
 
     set_interval(
         || async {
-            fetch_auctions().await;
+            if let Err(e) = fetch_auctions().await {
+                println!("Error occured while fetching auctions {e:?}")
+            }
         },
-        Duration::from_secs(20),
+        Duration::from_secs(3000),
     );
 
-    start_server().await;
+    start_server().await?;
     Ok(())
 }

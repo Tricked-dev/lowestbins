@@ -992,6 +992,7 @@ dependencies = [
 name = "lowestbins"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "arc-swap",
  "base64",
  "futures",
@@ -1005,7 +1006,6 @@ dependencies = [
  "substring",
  "surf",
  "tokio",
- "tokio-util",
 ]
 
 [[package]]

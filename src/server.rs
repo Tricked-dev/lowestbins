@@ -7,7 +7,7 @@ use crate::AUCTIONS;
 
 static NOTFOUND: &[u8] = b"Not Found";
 
-pub async fn start_server() {
+pub async fn start_server() -> Result<()> {
     let addr = "127.0.0.1:1337".parse().unwrap();
 
     let make_service =
@@ -21,6 +21,8 @@ pub async fn start_server() {
     if let Err(e) = server.await {
         error!("server error: {}", e);
     }
+
+    Ok(())
 }
 
 async fn response_examples(req: Request<Body>) -> Result<Response<Body>> {

@@ -1,9 +1,13 @@
-use crate::http_client::HTTP_CLIENT;
 use crate::nbt_utils::{Item, Pet};
+use crate::HTTP_CLIENT;
+
+use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
+use tokio::time::{self, Duration};
+
 use std::collections::HashMap;
 use std::future::Future;
-use tokio::time::{self, Duration};
+
 #[derive(Serialize, Deserialize)]
 pub struct HypixelResponse {
     #[serde(rename = "success")]
@@ -25,7 +29,7 @@ pub struct HypixelResponse {
     pub auctions: Vec<Item>,
 }
 
-pub async fn get(page: i64) -> HypixelResponse {
+pub async fn get(page: i64) -> Result<HypixelResponse> {
     let text = HTTP_CLIENT
         .get(format!(
             "https://api.hypixel.net/skyblock/auctions?page={}",
@@ -33,11 +37,12 @@ pub async fn get(page: i64) -> HypixelResponse {
         ))
         .send()
         .await
-        .unwrap()
+        .map_err(|x| anyhow!(x))?
         .body_string()
         .await
-        .unwrap();
-    serde_json::from_str(&text).unwrap()
+        .map_err(|x| anyhow!(x))?;
+
+    Ok(serde_json::from_str(&text)?)
 }
 
 pub fn parse_hypixel(auctions: Vec<Item>, mut map: HashMap<String, i64>) -> HashMap<String, i64> {
@@ -122,9 +127,9 @@ where
         interval.tick().await;
         loop {
             // Wait until next tick.
-            interval.tick().await;
             // Spawn a task for this tick.
             tokio::spawn(f());
+            interval.tick().await;
         }
     });
 }

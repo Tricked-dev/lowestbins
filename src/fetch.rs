@@ -1,17 +1,18 @@
 use crate::bazaar::get as get_bazaar;
 use crate::util::{get, parse_hypixel};
 use crate::AUCTIONS;
+use anyhow::Result;
 use futures::{stream, StreamExt};
 use log::info;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
-pub async fn fetch_auctions() {
+pub async fn fetch_auctions() -> Result<()> {
     info!("fetching auctions");
     let started = Instant::now();
 
-    let r = get(1).await;
+    let r = get(1).await?;
     let auctions: Arc<Mutex<HashMap<String, i64>>> =
         Arc::new(Mutex::new(parse_hypixel(r.auctions, HashMap::new())));
 
@@ -29,17 +30,24 @@ pub async fn fetch_auctions() {
                 let auctions: HashMap<String, i64> = HashMap::new();
                 let res = client(url).await;
                 println!("request time {}", nows.elapsed().as_millis());
-
-                parse_hypixel(res.auctions, auctions)
+                match res {
+                    Ok(res) => Some(parse_hypixel(res.auctions, auctions)),
+                    Err(e) => {
+                        eprintln!("{e:?}");
+                        None
+                    }
+                }
             }
         })
         .buffer_unordered(200);
 
     println!("Total fetch time {}", nower.elapsed().as_millis());
     bodies
-        .for_each(|res: HashMap<String, i64>| async {
-            let auction_clone = auctions.clone();
-            async move {
+        .for_each(|res: Option<HashMap<String, i64>>| async {
+            //HashMap<String, i64>
+            if let Some(res) = res {
+                let auction_clone = auctions.clone();
+
                 let mut auctions = auction_clone.lock().unwrap();
                 for (x, y) in res.iter() {
                     match auctions.get(x) {
@@ -54,12 +62,11 @@ pub async fn fetch_auctions() {
                     }
                 }
                 drop(auctions);
-            }
-            .await;
+            };
         })
         .await;
     info!("fetching bazaar");
-    let r = get_bazaar().await;
+    let r = get_bazaar().await?;
     let prods = r.products;
     for (key, val) in prods.iter() {
         auctions
@@ -69,11 +76,13 @@ pub async fn fetch_auctions() {
             .insert(key.to_string(), val.quick_status.buy_price.round() as i64);
     }
 
-    let xs = serde_json::to_string(&*auctions.lock().unwrap()).unwrap();
+    let xs = serde_json::to_string(&*auctions.lock().unwrap())?;
     drop(auctions);
     drop(prods);
 
     println!("!! Total time taken {}", started.elapsed().as_secs());
     info!("!! Total time taken {}", started.elapsed().as_secs());
     AUCTIONS.store(Arc::new(xs));
+
+    Ok(())
 }

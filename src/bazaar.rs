@@ -1,7 +1,10 @@
-use crate::http_client::HTTP_CLIENT;
+use std::collections::HashMap;
+
+use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::collections::HashMap;
+
+use crate::HTTP_CLIENT;
 
 #[derive(Serialize, Deserialize)]
 pub struct BazaarResponse {
@@ -71,14 +74,14 @@ pub struct QuickStatus {
     #[serde(rename = "buyOrders")]
     buy_orders: i64,
 }
-pub async fn get() -> BazaarResponse {
+pub async fn get() -> Result<BazaarResponse> {
     let text = HTTP_CLIENT
         .get("https://api.hypixel.net/skyblock/bazaar")
         .send()
         .await
-        .unwrap()
+        .map_err(|x| anyhow!(x))?
         .body_string()
         .await
-        .unwrap();
-    serde_json::from_str(&text).unwrap()
+        .map_err(|x| anyhow!(x))?;
+    Ok(serde_json::from_str(&text)?)
 }
