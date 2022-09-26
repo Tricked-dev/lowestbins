@@ -1,2 +1,2 @@
 start:
-	cargo build --release && chmod +777 lowestbins && ./lowestbins
+	cargo build --release; ./target/release/lowestbins

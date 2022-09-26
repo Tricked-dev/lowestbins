@@ -1,9 +1,10 @@
+use futures::Future;
 use lowestbins::fetch::fetch_auctions;
 use lowestbins::server::start_server;
-use lowestbins::util::set_interval;
+use tokio::time;
 use tokio::time::Duration;
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     set_interval(
         || async {
@@ -16,4 +17,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     start_server().await?;
     Ok(())
+}
+pub fn set_interval<F, Fut>(mut f: F, dur: Duration)
+where
+    F: Send + 'static + FnMut() -> Fut,
+    Fut: Future<Output = ()> + Send + 'static,
+{
+    let mut interval = time::interval(dur);
+    tokio::spawn(async move {
+        interval.tick().await;
+        loop {
+            tokio::spawn(f());
+            interval.tick().await;
+        }
+    });
 }

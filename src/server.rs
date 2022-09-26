@@ -25,9 +25,13 @@ pub async fn start_server() -> Result<()> {
 async fn response_examples(req: Request<Body>) -> Result<Response<Body>> {
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/lowestbins.json") | (&Method::GET, "/lowestbins") => {
-            let bytes = (*AUCTIONS.lock().unwrap()).clone().into_bytes();
+            let bytes = (*AUCTIONS.lock().unwrap()).clone();
             Ok(Response::builder()
                 .header(header::CONTENT_TYPE, "application/json")
+                .header(header::CACHE_CONTROL, "max-age=60")
+                .header("Access-Control-Allow-Origin", "*")
+                .header("Access-Control-Allow-Headers", "*")
+                .header("Access-Control-Allow-Methods", "GET, OPTIONS")
                 .body(Body::from(bytes))
                 .unwrap())
         }
@@ -38,7 +42,7 @@ async fn response_examples(req: Request<Body>) -> Result<Response<Body>> {
 /// HTTP status code 404
 fn not_found() -> Response<Body> {
     Response::builder()
-        // .status(StatusCode::NOT_FOUND)
+        .status(404)
         .body(NOTFOUND.into())
         .unwrap()
 }
