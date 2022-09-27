@@ -28,11 +28,11 @@ pub async fn get(page: i64) -> Result<HypixelResponse> {
         .send()
         .await
         .map_err(|x| anyhow!(x))?
-        .body_string()
+        .body_bytes()
         .await
         .map_err(|x| anyhow!(x))?;
 
-    Ok(serde_json::from_str(&text)?)
+    Ok(serde_json::from_slice(&text)?)
 }
 
 pub async fn fetch_auctions() -> Result<()> {
