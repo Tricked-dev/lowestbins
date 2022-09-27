@@ -426,15 +426,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "212d0f5754cb6769937f4501cc0e67f4f4483c8d2c3e1e922ee9edbe4ab4c7c0"
 
 [[package]]
-name = "encoding_rs"
-version = "0.8.31"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9852635589dc9f9ea1b6fe9f05b50ef208c85c834a562f0c6abb1c475736ec2b"
-dependencies = [
- "cfg-if",
-]
-
-[[package]]
 name = "event-listener"
 version = "2.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -945,7 +936,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "base64",
- "flate2",
  "futures",
  "hematite-nbt",
  "hyper",
@@ -1456,7 +1446,6 @@ dependencies = [
  "async-std",
  "async-trait",
  "cfg-if",
- "encoding_rs",
  "futures-util",
  "getrandom 0.2.7",
  "http-client",
@@ -1467,7 +1456,6 @@ dependencies = [
  "pin-project-lite",
  "serde",
  "serde_json",
- "web-sys",
 ]
 
 [[package]]

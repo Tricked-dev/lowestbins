@@ -2,5 +2,6 @@
 node_modules
 .idea/
 lowestbins.json
+skytils.json
 debug.log
 info.log

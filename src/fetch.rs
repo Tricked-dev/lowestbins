@@ -80,7 +80,8 @@ pub async fn fetch_auctions() -> Result<()> {
     let prods = bz.products;
     let mut auctions = auctions.lock().unwrap();
     for (key, val) in prods.iter() {
-        auctions.insert(key.to_string(), val.quick_status.buy_price.round() as u64);
+        let k = key.to_owned().replace("ENCHANTED_BOOK-", "ENCHANTMENT");
+        auctions.insert(k, val.quick_status.buy_price.round() as u64);
     }
 
     let xs = serde_json::to_vec(&*auctions)?;
