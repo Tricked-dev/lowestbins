@@ -20,15 +20,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         Duration::from_secs(seconds),
     );
-    ctrlc::set_handler(move || {
-        fs::write(
-            "auctions.json",
-            serde_json::to_string_pretty(&*AUCTIONS.lock().unwrap()).unwrap(),
-        )
-        .unwrap();
-        println!("Wrote save to disk");
-        process::exit(0)
-    })?;
+
+    if env::var("SAVE_TO_DISK").unwrap_or("1".to_owned()) != "0" {
+        ctrlc::set_handler(move || {
+            fs::write(
+                "auctions.json",
+                serde_json::to_string_pretty(&*AUCTIONS.lock().unwrap()).unwrap(),
+            )
+            .unwrap();
+            println!("Wrote save to disk");
+            process::exit(0)
+        })?;
+    }
 
     start_server().await?;
     Ok(())

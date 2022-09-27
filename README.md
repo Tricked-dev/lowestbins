@@ -14,6 +14,7 @@ Env variables
 ```env
 PORT # The port to run the server on
 HOST # The host to run the server on
+SAVE_TO_DISK # set to 0 to not save the auctions to disk
 PARRALELL # The amount of parrallel requests to make (advanced usage)
 OVERWRITES # Overwrite values format: `BLESSED_BAIT:200,ROCK_CANDY:6000,NON_EXISTENT_ITEM:200`
 UPDATE_SECONDS # The amount of seconds to wait before updating the lowestbins
