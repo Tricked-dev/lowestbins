@@ -36,7 +36,7 @@ pub struct PartialExtraAttr {
     pub pet: Option<String>,
     pub enchantments: Option<HashMap<String, u8>>,
     pub potion: Option<String>,
-    pub potion_level: Option<i16>,
+    pub potion_level: Option<u8>,
     #[serde(default = "bool_false")]
     pub enhanced: bool,
     pub runes: Option<HashMap<String, u8>>,
@@ -59,7 +59,7 @@ pub struct Item {
     #[serde(rename = "item_bytes")]
     pub bytes: ItemBytes,
     #[serde(rename = "starting_bid")]
-    pub starting_bid: i64,
+    pub starting_bid: u64,
     #[serde(rename = "bin", default = "bool_false")]
     pub bin: bool,
 }

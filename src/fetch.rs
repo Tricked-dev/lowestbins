@@ -39,12 +39,12 @@ pub async fn fetch_auctions() -> Result<()> {
     let start = std::time::Instant::now();
     let hs = get(1).await?;
 
-    let auctions: Arc<Mutex<HashMap<String, i64>>> =
+    let auctions: Arc<Mutex<HashMap<String, u64>>> =
         Arc::new(Mutex::new(parse_hypixel(hs.auctions, HashMap::new())));
 
     let bodies = stream::iter(2..hs.total_pages)
         .map(|url| async move {
-            let auctions: HashMap<String, i64> = HashMap::new();
+            let auctions: HashMap<String, u64> = HashMap::new();
             let res = get(url).await;
             match res {
                 Ok(res) => Some(parse_hypixel(res.auctions, auctions)),
@@ -57,7 +57,7 @@ pub async fn fetch_auctions() -> Result<()> {
         .buffer_unordered(*PARRALEL);
 
     bodies
-        .for_each(|res: Option<HashMap<String, i64>>| async {
+        .for_each(|res: Option<HashMap<String, u64>>| async {
             if let Some(res) = res {
                 let mut auctions = auctions.lock().unwrap();
                 for (x, y) in res.iter() {
@@ -80,7 +80,7 @@ pub async fn fetch_auctions() -> Result<()> {
     let prods = bz.products;
     let mut auctions = auctions.lock().unwrap();
     for (key, val) in prods.iter() {
-        auctions.insert(key.to_string(), val.quick_status.buy_price.round() as i64);
+        auctions.insert(key.to_string(), val.quick_status.buy_price.round() as u64);
     }
 
     let xs = serde_json::to_vec(&*auctions)?;
@@ -90,7 +90,7 @@ pub async fn fetch_auctions() -> Result<()> {
     println!("Fetched auctions in {:?}", start.elapsed());
     Ok(())
 }
-pub fn parse_hypixel(auctions: Vec<Item>, mut map: HashMap<String, i64>) -> HashMap<String, i64> {
+pub fn parse_hypixel(auctions: Vec<Item>, mut map: HashMap<String, u64>) -> HashMap<String, u64> {
     for auction in auctions {
         if auction.bin {
             let nbt = &auction.to_nbt().unwrap().i[0];
@@ -137,11 +137,11 @@ pub fn parse_hypixel(auctions: Vec<Item>, mut map: HashMap<String, i64>) -> Hash
             match r {
                 Some(s) => {
                     if s > &auction.starting_bid {
-                        map.insert(id, auction.starting_bid / count as i64);
+                        map.insert(id, auction.starting_bid / count as u64);
                     };
                 }
                 None => {
-                    map.insert(id, auction.starting_bid / count as i64);
+                    map.insert(id, auction.starting_bid / count as u64);
                 }
             }
         }
