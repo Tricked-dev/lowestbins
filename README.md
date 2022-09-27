@@ -14,4 +14,4 @@ A fast and effecient lowestbins implementation this uses parrallel requests to f
 - hyper server
 - \+prob more things
 
-> Licensed under the [GNU General Public License v2.0](./LICENSE) License
+> Licensed under the [Apache 2](./LICENSE) License
