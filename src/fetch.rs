@@ -40,7 +40,6 @@ pub async fn fetch_auctions() -> Result<()> {
 
     let mut auctions: DashMap<String, u64> = DashMap::new();
     parse_hypixel(hs.auctions, &auctions);
-    println!("{}", &auctions.len());
     let bodies = stream::iter(2..hs.total_pages)
         .map(|url| async move {
             let res = get(url).await;
@@ -83,12 +82,14 @@ pub async fn fetch_auctions() -> Result<()> {
     let xs = serde_json::to_vec(&auctions)?;
 
     let mut auc = AUCTIONS.lock().unwrap();
+    println!("fetched: {}", auctions.len());
+    auc.extend(auctions);
+    println!("total: {}", &auc.len());
     println!(
         "size: {}KB\nFetched auctions in {:?}",
         xs.len() / 1000,
         start.elapsed()
     );
-    *auc = xs;
     Ok(())
 }
 pub fn parse_hypixel(auctions: Vec<Item>, map: &DashMap<String, u64>) {
@@ -126,6 +127,17 @@ pub fn parse_hypixel(auctions: Vec<Item>, map: &DashMap<String, u64>) {
                         if x.len() == 1 {
                             for (key, val) in x.iter() {
                                 id = format!("RUNE-{}-{}", key.to_ascii_uppercase(), val);
+                            }
+                        }
+                    }
+                    None => {}
+                },
+                "ATTRIBUTE_SHARD" => match &nbt.tag.extra_attributes.attributes {
+                    Some(x) => {
+                        if x.len() == 1 {
+                            for (key, val) in x.iter() {
+                                id =
+                                    format!("ATTRIBUTE_SHARD-{}-{}", key.to_ascii_uppercase(), val);
                             }
                         }
                     }

@@ -1,8 +1,11 @@
 use std::env;
+use std::fs;
+use std::process;
 
 use futures::Future;
 use lowestbins::fetch::fetch_auctions;
 use lowestbins::server::start_server;
+use lowestbins::AUCTIONS;
 use tokio::time;
 use tokio::time::Duration;
 
@@ -17,6 +20,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         Duration::from_secs(seconds),
     );
+    ctrlc::set_handler(move || {
+        fs::write(
+            "auctions.json",
+            serde_json::to_string_pretty(&*AUCTIONS.lock().unwrap()).unwrap(),
+        )
+        .unwrap();
+        println!("Wrote save to disk");
+        process::exit(0)
+    })?;
 
     start_server().await?;
     Ok(())

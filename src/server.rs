@@ -31,7 +31,7 @@ async fn response_examples(req: Request<Body>) -> Result<Response<Body>> {
         (&Method::GET, "/lowestbins.json")
         | (&Method::GET, "/lowestbins")
         | (&Method::GET, "/auctions/lowestbins") => {
-            let bytes = (*AUCTIONS.lock().unwrap()).clone();
+            let bytes = serde_json::to_vec(&*AUCTIONS.lock().unwrap()).unwrap();
             Ok(Response::builder()
                 .header(header::CONTENT_TYPE, "application/json")
                 .header(header::CACHE_CONTROL, "max-age=60")

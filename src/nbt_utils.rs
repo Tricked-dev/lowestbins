@@ -40,6 +40,7 @@ pub struct PartialExtraAttr {
     #[serde(default = "bool_false")]
     pub enhanced: bool,
     pub runes: Option<HashMap<String, u8>>,
+    pub attributes: Option<HashMap<String, u8>>,
 }
 
 #[derive(Deserialize)]
