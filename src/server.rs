@@ -28,7 +28,9 @@ pub async fn start_server() -> Result<()> {
 
 async fn response_examples(req: Request<Body>) -> Result<Response<Body>> {
     match (req.method(), req.uri().path()) {
-        (&Method::GET, "/lowestbins.json") | (&Method::GET, "/lowestbins") => {
+        (&Method::GET, "/lowestbins.json")
+        | (&Method::GET, "/lowestbins")
+        | (&Method::GET, "/auctions/lowestbins") => {
             let bytes = (*AUCTIONS.lock().unwrap()).clone();
             Ok(Response::builder()
                 .header(header::CONTENT_TYPE, "application/json")
