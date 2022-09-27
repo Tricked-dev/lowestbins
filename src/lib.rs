@@ -22,8 +22,9 @@ lazy_static::lazy_static! {
       for overwrite in overwrites.split(",") {
          let mut split = overwrite.split(":");
          let key = split.next().unwrap();
-         let value = split.next().unwrap().parse().unwrap();
-         map.insert(key.to_string(), value);
+         if let Some(value) = split.next() {
+            map.insert(key.to_string(), value.parse().unwrap());
+         }
       }
       map
    };

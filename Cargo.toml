@@ -11,6 +11,9 @@ lto = true
 # strip = true
 [dependencies]
 anyhow = "1.0"
+dashmap = { version = "5.4.0", features = [
+    "serde",
+] }
 base64 = { version = "0.13" }
 futures = { version = "0.3", features = [
     "async-await",
