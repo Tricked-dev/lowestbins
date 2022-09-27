@@ -1,7 +1,7 @@
 use crate::bazaar::get as get_bazaar;
 use crate::nbt_utils::{Item, Pet};
-use crate::AUCTIONS;
 use crate::HTTP_CLIENT;
+use crate::{AUCTIONS, PARRALEL};
 
 use anyhow::{anyhow, Result};
 use futures::{stream, StreamExt};
@@ -36,6 +36,7 @@ pub async fn get(page: i64) -> Result<HypixelResponse> {
 }
 
 pub async fn fetch_auctions() -> Result<()> {
+    let start = std::time::Instant::now();
     let hs = get(1).await?;
 
     let auctions: Arc<Mutex<HashMap<String, i64>>> =
@@ -53,7 +54,7 @@ pub async fn fetch_auctions() -> Result<()> {
                 }
             }
         })
-        .buffer_unordered(200);
+        .buffer_unordered(*PARRALEL);
 
     bodies
         .for_each(|res: Option<HashMap<String, i64>>| async {
@@ -86,6 +87,7 @@ pub async fn fetch_auctions() -> Result<()> {
 
     let mut auc = AUCTIONS.lock().unwrap();
     *auc = xs;
+    println!("Fetched auctions in {:?}", start.elapsed());
     Ok(())
 }
 pub fn parse_hypixel(auctions: Vec<Item>, mut map: HashMap<String, i64>) -> HashMap<String, i64> {
@@ -93,7 +95,7 @@ pub fn parse_hypixel(auctions: Vec<Item>, mut map: HashMap<String, i64>) -> Hash
         if auction.bin {
             let nbt = &auction.to_nbt().unwrap().i[0];
             let mut id = nbt.tag.extra_attributes.id.clone();
-            let count = nbt.count;
+            let count = auction.count;
 
             match &nbt.tag.extra_attributes.pet {
                 Some(x) => {
@@ -135,11 +137,11 @@ pub fn parse_hypixel(auctions: Vec<Item>, mut map: HashMap<String, i64>) -> Hash
             match r {
                 Some(s) => {
                     if s > &auction.starting_bid {
-                        map.insert(id, auction.starting_bid / count);
+                        map.insert(id, auction.starting_bid / count as i64);
                     };
                 }
                 None => {
-                    map.insert(id, auction.starting_bid / count);
+                    map.insert(id, auction.starting_bid / count as i64);
                 }
             }
         }

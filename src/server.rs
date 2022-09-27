@@ -1,12 +1,16 @@
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{header, Body, Method, Request, Response, Result, Server};
 
+use std::env;
+
 use crate::AUCTIONS;
 
 static NOTFOUND: &[u8] = b"Not Found";
 
 pub async fn start_server() -> Result<()> {
-    let addr = "127.0.0.1:1337".parse().unwrap();
+    let port = env::var("PORT").unwrap_or("8080".to_string());
+    let host = env::var("HOST").unwrap_or("127.0.0.1".to_owned());
+    let addr = format!("{host}:{port}").parse().unwrap();
 
     let make_service =
         make_service_fn(|_| async { Ok::<_, hyper::Error>(service_fn(response_examples)) });

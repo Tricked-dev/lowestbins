@@ -3,6 +3,7 @@ pub mod fetch;
 pub mod nbt_utils;
 pub mod server;
 
+use std::env;
 use std::{sync::Mutex, time::Duration};
 
 use surf::{Client, Config};
@@ -13,4 +14,5 @@ lazy_static::lazy_static! {
         .set_timeout(Some(Duration::from_secs(50)))
         .try_into()
         .unwrap();
+   pub static ref PARRALEL :usize = env::var("PARRALEL").map_or(32, |f|f.parse().unwrap());
 }

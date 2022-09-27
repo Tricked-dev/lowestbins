@@ -11,8 +11,6 @@ pub struct PartialNbt {
 
 #[derive(Deserialize)]
 pub struct PartialNbtElement {
-    #[serde(rename = "Count")]
-    pub count: i64,
     pub tag: PartialTag,
 }
 
@@ -36,12 +34,12 @@ pub struct PartialExtraAttr {
     pub id: String,
     #[serde(rename = "petInfo")]
     pub pet: Option<String>,
-    pub enchantments: Option<HashMap<String, i32>>,
+    pub enchantments: Option<HashMap<String, u8>>,
     pub potion: Option<String>,
     pub potion_level: Option<i16>,
     #[serde(default = "bool_false")]
     pub enhanced: bool,
-    pub runes: Option<HashMap<String, i32>>,
+    pub runes: Option<HashMap<String, u8>>,
 }
 
 #[derive(Deserialize)]
@@ -55,8 +53,8 @@ pub struct Item {
     #[serde(rename = "item_name")]
     pub name: String,
     /// The count of items in the stack
-    #[serde(rename = "item_count", skip_serializing_if = "Option::is_none")]
-    pub count: Option<i64>,
+    #[serde(rename = "item_count", default = "one")]
+    pub count: u8,
     /// The item's gzipped NBT representation
     #[serde(rename = "item_bytes")]
     pub bytes: ItemBytes,
@@ -67,6 +65,9 @@ pub struct Item {
 }
 fn bool_false() -> bool {
     false
+}
+fn one() -> u8 {
+    1
 }
 impl Item {
     pub fn to_nbt(&self) -> Result<PartialNbt, Box<dyn std::error::Error>> {
