@@ -7,6 +7,7 @@ use anyhow::{anyhow, Result};
 use futures::{stream, StreamExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::mem::size_of;
 use std::sync::{Arc, Mutex};
 
 #[derive(Serialize, Deserialize)]
@@ -87,8 +88,12 @@ pub async fn fetch_auctions() -> Result<()> {
     let xs = serde_json::to_vec(&*auctions)?;
 
     let mut auc = AUCTIONS.lock().unwrap();
+    println!(
+        "size: {}KB\nFetched auctions in {:?}",
+        (xs.len() * 8) / 1000,
+        start.elapsed()
+    );
     *auc = xs;
-    println!("Fetched auctions in {:?}", start.elapsed());
     Ok(())
 }
 pub fn parse_hypixel(auctions: Vec<Item>, mut map: HashMap<String, u64>) -> HashMap<String, u64> {

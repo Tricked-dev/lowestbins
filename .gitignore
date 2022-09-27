@@ -5,3 +5,4 @@ lowestbins.json
 skytils.json
 debug.log
 info.log
+memory-profiling_*.dat
