@@ -1,6 +1,6 @@
 # Lowestbins-rs
 
-A fast and effecient lowestbins implementation this uses parrallel requests to fetch all lowestbins in less than **4 SECONDS** and uses the hyper server allowing for practically unlimited requests per second while only using 70mb of ram!
+A fast and effecient lowestbins implementation this uses parrallel requests to fetch all lowestbins in less than **3.5 SECONDS** and uses the hyper server allowing for practically unlimited requests per second while only using 70mb of ram!
 
 ## Building
 

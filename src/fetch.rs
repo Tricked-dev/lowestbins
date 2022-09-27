@@ -73,7 +73,6 @@ pub async fn fetch_auctions() -> Result<()> {
                         }
                     }
                 }
-                drop(auctions);
             };
         })
         .await;
@@ -90,7 +89,7 @@ pub async fn fetch_auctions() -> Result<()> {
     let mut auc = AUCTIONS.lock().unwrap();
     println!(
         "size: {}KB\nFetched auctions in {:?}",
-        (xs.len() * 8) / 1000,
+        xs.len() / 1000,
         start.elapsed()
     );
     *auc = xs;

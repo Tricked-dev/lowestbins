@@ -8,7 +8,7 @@ version = "0.1.0"
 
 [profile.release]
 lto = true
-strip = true
+# strip = true
 [dependencies]
 anyhow = "1.0"
 base64 = { version = "0.13" }
