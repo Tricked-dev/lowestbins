@@ -1,5 +1,6 @@
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{header, Body, Method, Request, Response, Result, Server};
+use serde_json::json;
 
 use std::env;
 
@@ -38,9 +39,24 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
                 .header(header::ACCESS_CONTROL_ALLOW_METHODS, "GET, OPTIONS")
                 .header(header::ACCESS_CONTROL_ALLOW_HEADERS, "*")
                 .header(header::ACCESS_CONTROL_MAX_AGE, "86400")
+                .header("funding", "https://github.com/sponsors/Tricked-dev")
                 .body(Body::from(bytes))
                 .unwrap())
         }
+        (_, "/") => Ok(Response::builder()
+            .header(header::CONTENT_TYPE, "application/json")
+            .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+            .header(header::ACCESS_CONTROL_ALLOW_METHODS, "GET, OPTIONS")
+            .header(header::ACCESS_CONTROL_ALLOW_HEADERS, "*")
+            .body(Body::from(
+                serde_json::to_vec_pretty(&json!({
+                    "message": "Welcome to the lowestbins API",
+                    "endpoint": "/lowestbins",
+                    "funding": "https://github.com/sponsors/Tricked-dev"
+                }))
+                .unwrap(),
+            ))
+            .unwrap()),
         _ => Ok(not_found()),
     }
 }
