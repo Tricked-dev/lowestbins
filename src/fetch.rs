@@ -1,13 +1,12 @@
 use crate::bazaar::get as get_bazaar;
 use crate::nbt_utils::{Item, Pet};
-use crate::HTTP_CLIENT;
 use crate::{AUCTIONS, PARRALEL};
+use crate::{HTTP_CLIENT, OVERWRITES};
 
 use anyhow::{anyhow, Result};
 use futures::{stream, StreamExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::mem::size_of;
 use std::sync::{Arc, Mutex};
 
 #[derive(Serialize, Deserialize)]
@@ -62,16 +61,12 @@ pub async fn fetch_auctions() -> Result<()> {
             if let Some(res) = res {
                 let mut auctions = auctions.lock().unwrap();
                 for (x, y) in res.iter() {
-                    match auctions.get(x) {
-                        Some(s) => {
-                            if s > y {
-                                auctions.insert(x.to_owned(), *y);
-                            };
-                        }
-                        None => {
-                            auctions.insert(x.to_owned(), *y);
-                        }
+                    if let Some(s) = auctions.get(x) {
+                        if s < y {
+                            continue;
+                        };
                     }
+                    auctions.insert(x.to_owned(), *y);
                 }
             };
         })
@@ -83,7 +78,7 @@ pub async fn fetch_auctions() -> Result<()> {
         let k = key.to_owned().replace("ENCHANTED_BOOK-", "ENCHANTMENT");
         auctions.insert(k, val.quick_status.buy_price.round() as u64);
     }
-
+    auctions.extend(OVERWRITES.clone());
     let xs = serde_json::to_vec(&*auctions)?;
 
     let mut auc = AUCTIONS.lock().unwrap();
