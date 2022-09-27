@@ -12,8 +12,7 @@ pub async fn start_server() -> Result<()> {
     let host = env::var("HOST").unwrap_or("127.0.0.1".to_owned());
     let addr = format!("{host}:{port}").parse().unwrap();
 
-    let make_service =
-        make_service_fn(|_| async { Ok::<_, hyper::Error>(service_fn(response_examples)) });
+    let make_service = make_service_fn(|_| async { Ok::<_, hyper::Error>(service_fn(response)) });
 
     let server = Server::bind(&addr).serve(make_service);
 
@@ -26,7 +25,7 @@ pub async fn start_server() -> Result<()> {
     Ok(())
 }
 
-async fn response_examples(req: Request<Body>) -> Result<Response<Body>> {
+async fn response(req: Request<Body>) -> Result<Response<Body>> {
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/lowestbins.json")
         | (&Method::GET, "/lowestbins")
@@ -34,10 +33,11 @@ async fn response_examples(req: Request<Body>) -> Result<Response<Body>> {
             let bytes = serde_json::to_vec(&*AUCTIONS.lock().unwrap()).unwrap();
             Ok(Response::builder()
                 .header(header::CONTENT_TYPE, "application/json")
-                .header(header::CACHE_CONTROL, "max-age=60")
-                .header("Access-Control-Allow-Origin", "*")
-                .header("Access-Control-Allow-Headers", "*")
-                .header("Access-Control-Allow-Methods", "GET, OPTIONS")
+                .header(header::CACHE_CONTROL, "max-age=60, s-maxage=60")
+                .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+                .header(header::ACCESS_CONTROL_ALLOW_METHODS, "GET, OPTIONS")
+                .header(header::ACCESS_CONTROL_ALLOW_HEADERS, "*")
+                .header(header::ACCESS_CONTROL_MAX_AGE, "86400")
                 .body(Body::from(bytes))
                 .unwrap())
         }
