@@ -37,8 +37,8 @@ jobs:
           registry: ghcr.io
           image: "lowestbins"
           dockerfile: Dockerfile.prebuild
-          username: ${{ secrets.GHCR_USERNAME }}
-          password: ${{ secrets.GHCR_TOKEN }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/upload-artifact@v2
         with:
