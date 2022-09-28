@@ -1,13 +1,8 @@
-use std::env;
-use std::fs;
-use std::process;
+use std::{env, fs, process};
 
 use futures::Future;
-use lowestbins::fetch::fetch_auctions;
-use lowestbins::server::start_server;
-use lowestbins::AUCTIONS;
-use tokio::time;
-use tokio::time::Duration;
+use lowestbins::{fetch::fetch_auctions, server::start_server, AUCTIONS};
+use tokio::{time, time::Duration};
 
 static UPDATE_SECONDS: &str = "UPDATE_SECONDS";
 static SAVE_TO_DISK: &str = "SAVE_TO_DISK";

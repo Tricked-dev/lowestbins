@@ -1,8 +1,6 @@
-use std::env;
-use std::process::Command;
+use std::{env, process::Command};
 
-const LOC: &str =
-    "https://raw.githubusercontent.com/Skytils/SkytilsMod-Data/main/constants/sellprices.json";
+const LOC: &str = "https://raw.githubusercontent.com/Skytils/SkytilsMod-Data/main/constants/sellprices.json";
 fn main() {
     let output = format!("{}/sellprices.json", &env::var("OUT_DIR").unwrap());
     println!("cargo:rerun-if-changed={}", output);

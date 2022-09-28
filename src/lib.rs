@@ -4,9 +4,7 @@ pub mod nbt_utils;
 pub mod server;
 pub mod webhook;
 
-use std::collections::HashMap;
-use std::env;
-use std::{fs, sync::Mutex, time::Duration};
+use std::{collections::HashMap, env, fs, sync::Mutex, time::Duration};
 
 use surf::{Client, Config};
 

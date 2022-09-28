@@ -1,5 +1,8 @@
-use hyper::service::{make_service_fn, service_fn};
-use hyper::{header, Body, Method, Request, Response, Result, Server};
+use hyper::{
+    header,
+    service::{make_service_fn, service_fn},
+    Body, Method, Request, Response, Result, Server,
+};
 use serde_json::json;
 
 use std::env;
@@ -30,9 +33,7 @@ pub async fn start_server() -> Result<()> {
 
 async fn response(req: Request<Body>) -> Result<Response<Body>> {
     match (req.method(), req.uri().path()) {
-        (&Method::GET, "/lowestbins.json")
-        | (&Method::GET, "/lowestbins")
-        | (&Method::GET, "/auctions/lowestbins") => {
+        (&Method::GET, "/lowestbins.json") | (&Method::GET, "/lowestbins") | (&Method::GET, "/auctions/lowestbins") => {
             let bytes = serde_json::to_vec(&*AUCTIONS.lock().unwrap()).unwrap();
             Ok(Response::builder()
                 .header(header::CONTENT_TYPE, "application/json")
@@ -65,8 +66,5 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
 
 /// HTTP status code 404
 fn not_found() -> Response<Body> {
-    Response::builder()
-        .status(404)
-        .body(NOTFOUND.into())
-        .unwrap()
+    Response::builder().status(404).body(NOTFOUND.into()).unwrap()
 }

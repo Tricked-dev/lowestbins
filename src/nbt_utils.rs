@@ -1,8 +1,6 @@
 use nbt::from_gzip_reader;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::io;
-use std::result::Result as StdResult;
+use std::{collections::HashMap, io, result::Result as StdResult};
 
 #[derive(Deserialize)]
 pub struct PartialNbt {

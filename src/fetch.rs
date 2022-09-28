@@ -1,14 +1,13 @@
-use crate::bazaar::get as get_bazaar;
-use crate::nbt_utils::{Item, Pet};
-use crate::webhook::*;
-use crate::AUCTIONS;
-use crate::{HTTP_CLIENT, OVERWRITES};
+use crate::{
+    bazaar::get as get_bazaar,
+    nbt_utils::{Item, Pet},
+    webhook::*,
+    AUCTIONS, HTTP_CLIENT, OVERWRITES,
+};
 
 use anyhow::{anyhow, Result};
 use dashmap::DashMap;
-use futures::stream::FuturesUnordered;
-use futures::FutureExt;
-use futures::StreamExt;
+use futures::{stream::FuturesUnordered, FutureExt, StreamExt};
 use serde::{Deserialize, Serialize};
 
 use std::time::Instant;
@@ -25,10 +24,7 @@ pub struct HypixelResponse {
 
 pub async fn get(page: i64) -> Result<HypixelResponse> {
     let mut text = HTTP_CLIENT
-        .get(format!(
-            "https://api.hypixel.net/skyblock/auctions?page={}",
-            page
-        ))
+        .get(format!("https://api.hypixel.net/skyblock/auctions?page={}", page))
         .send()
         .await
         .map_err(|x| anyhow!(x))?
@@ -159,8 +155,7 @@ pub fn parse_hypixel(auctions: Vec<Item>, map: &DashMap<String, u64>) {
                     Some(x) => {
                         if x.len() == 1 {
                             for (key, val) in x.iter() {
-                                id =
-                                    format!("ATTRIBUTE_SHARD-{}-{}", key.to_ascii_uppercase(), val);
+                                id = format!("ATTRIBUTE_SHARD-{}-{}", key.to_ascii_uppercase(), val);
                             }
                         }
                     }
