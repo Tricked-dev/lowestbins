@@ -7,12 +7,10 @@ use anyhow::{anyhow, Result};
 use dashmap::DashMap;
 use futures::stream::FuturesUnordered;
 use futures::FutureExt;
-use futures::{stream, StreamExt};
+use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 
-use std::fmt::Write;
-use std::sync::{Arc, Mutex};
-use std::{fs, time::Instant};
+use std::time::Instant;
 
 #[derive(Serialize, Deserialize)]
 pub struct HypixelResponse {
@@ -25,7 +23,7 @@ pub struct HypixelResponse {
 }
 
 pub async fn get(page: i64) -> Result<HypixelResponse> {
-    let text = HTTP_CLIENT
+    let mut text = HTTP_CLIENT
         .get(format!(
             "https://api.hypixel.net/skyblock/auctions?page={}",
             page
@@ -36,8 +34,10 @@ pub async fn get(page: i64) -> Result<HypixelResponse> {
         .body_bytes()
         .await
         .map_err(|x| anyhow!(x))?;
-
-    Ok(serde_json::from_slice(&text)?)
+    #[cfg(feature = "simd")]
+    return Ok(simd_json::from_slice(&mut text)?);
+    #[cfg(not(feature = "simd"))]
+    return Ok(serde_json::from_slice(&text)?);
 }
 
 async fn get_auctions(page: i64, auctions: &DashMap<String, u64>) {

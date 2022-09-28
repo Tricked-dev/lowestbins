@@ -26,8 +26,8 @@ lazy_static::lazy_static! {
    pub static ref OVERWRITES: HashMap<String,u64> = {
       let overwrites = env::var("OVERWRITES").unwrap_or("".to_string());
       let mut map = HashMap::new();
-      for overwrite in overwrites.split(",") {
-         let mut split = overwrite.split(":");
+      for overwrite in overwrites.split(',') {
+         let mut split = overwrite.split(':');
          let key = split.next().unwrap();
          if let Some(value) = split.next() {
             map.insert(key.to_string(), value.parse().unwrap());

@@ -27,7 +27,7 @@ pub struct QuickStatus {
     pub buy_price: f64,
 }
 pub async fn get() -> Result<BazaarResponse> {
-    let text = HTTP_CLIENT
+    let mut text = HTTP_CLIENT
         .get("https://api.hypixel.net/skyblock/bazaar")
         .send()
         .await
@@ -35,5 +35,9 @@ pub async fn get() -> Result<BazaarResponse> {
         .body_bytes()
         .await
         .map_err(|x| anyhow!(x))?;
-    Ok(serde_json::from_slice(&text)?)
+
+    #[cfg(feature = "simd")]
+    return Ok(simd_json::from_slice(&mut text)?);
+    #[cfg(not(feature = "simd"))]
+    return Ok(serde_json::from_slice(&text)?);
 }
