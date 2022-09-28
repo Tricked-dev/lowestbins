@@ -13,7 +13,7 @@
 
 </div>
 
-A fast and effecient lowestbins implementation this uses parrallel requests to fetch all lowestbins in less than **3.5 SECONDS** and uses the hyper server allowing for practically unlimited requests per second while only using 50mb of ram!
+A fast and effecient lowestbins implementation this uses parrallel requests to fetch all lowestbins in less than **2.5 SECONDS** and uses the hyper server allowing for practically unlimited requests per second while only using 50mb of ram!
 
 ## Hosted Instance
 
