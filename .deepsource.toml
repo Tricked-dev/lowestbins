@@ -4,9 +4,9 @@ version = 1
 name = "rust"
 enabled = true
 
-  [analyzers.meta]
-  msrv = "stable"
+[analyzers.meta]
+msrv = "stable"
 
 [[transformers]]
 name = "rustfmt"
-enabled = true
+enabled = false

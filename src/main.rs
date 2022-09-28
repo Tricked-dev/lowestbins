@@ -7,8 +7,15 @@ use tokio::{time, time::Duration};
 static UPDATE_SECONDS: &str = "UPDATE_SECONDS";
 static SAVE_TO_DISK: &str = "SAVE_TO_DISK";
 
+static LOGO: &str = include_str!(concat!(env!("OUT_DIR"), "/logo.txt"));
+static SOURCE: &str = "https://github.com/Tricked-dev/lowestbins";
+
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    println!(
+        "{LOGO}\nLoaded {} auctions from save\nMade by Tricked-dev - source: {SOURCE}",
+        AUCTIONS.lock().unwrap().len(),
+    );
     let seconds = env::var(UPDATE_SECONDS).map_or(60, |f| f.parse().unwrap());
     set_interval(
         || async {
@@ -26,7 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 serde_json::to_string_pretty(&*AUCTIONS.lock().unwrap()).unwrap(),
             )
             .unwrap();
-            println!("Wrote save to disk");
+            println!("\nWrote save to disk");
             process::exit(0)
         })?;
     }

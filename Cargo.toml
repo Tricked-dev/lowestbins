@@ -9,7 +9,11 @@ default = ["simd"]
 simd = ["simd-json"]
 [profile.release]
 lto = true
-# strip = true
+strip = true
+
+[build-dependencies]
+colored = "2.0"
+
 [dependencies]
 anyhow = "1.0"
 dashmap = { version = "5.4", features = [
