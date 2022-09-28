@@ -2,6 +2,12 @@
 
 A fast and effecient lowestbins implementation this uses parrallel requests to fetch all lowestbins in less than **3.5 SECONDS** and uses the hyper server allowing for practically unlimited requests per second while only using 50mb of ram!
 
+## Hosted Instance
+
+- [lb.tricked.pro/](https://lb.tricked.pro/)
+
+If you are using this in a project please credit me! or sponsor me on github [github.com/sponsors/Tricked-dev](https://github.com/sponsors/Tricked-dev)
+
 ## Building
 
 - If you're on Linux, you can go to releases and download the binary
