@@ -6,8 +6,6 @@ on:
     paths:
       - "**.ts"
       - "**.toml"
-  pull_request:
-    branches: [master]
 
 env:
   CARGO_TERM_COLOR: always
