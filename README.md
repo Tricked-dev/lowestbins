@@ -26,6 +26,14 @@ A fast and effecient lowestbins implementation this uses parrallel requests to f
 
 If you are using this in a project please credit me! or sponsor me on github [github.com/sponsors/Tricked-dev](https://github.com/sponsors/Tricked-dev)
 
+## Usage
+
+### Docker
+
+```bash
+docker run  --name lowestbins -p 8080:8080 -e HOST=0.0.0.0 -e UPDATE_SECONDS=120 -d ghcr.io/tricked-dev/lowestbins:latest
+```
+
 ## Building
 
 - If you're on Linux, you can go to releases and download the binary

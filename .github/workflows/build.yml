@@ -3,6 +3,9 @@ name: Build and upload artifacts.
 on:
   push:
     branches: [master]
+      paths:
+        - '**.ts'
+        - '**.toml'
   pull_request:
     branches: [master]
 
