@@ -37,6 +37,7 @@ jobs:
           registry: ghcr.io
           image: "lowestbins"
           dockerfile: Dockerfile.prebuild
+          tags: latest
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
