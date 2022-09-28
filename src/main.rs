@@ -1,32 +1,39 @@
 use std::{env, fs, process};
 
 use futures::Future;
-use lowestbins::{fetch::fetch_auctions, server::start_server, AUCTIONS};
+use lowestbins::{
+    fetch::{fetch_auctions, get},
+    server::start_server,
+    AUCTIONS, CONFIG,
+};
 use tokio::{time, time::Duration};
-
-static UPDATE_SECONDS: &str = "UPDATE_SECONDS";
-static SAVE_TO_DISK: &str = "SAVE_TO_DISK";
 
 static LOGO: &str = include_str!(concat!(env!("OUT_DIR"), "/logo.txt"));
 static SOURCE: &str = "https://github.com/Tricked-dev/lowestbins";
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let now = time::Instant::now();
+    get(1).await?;
     println!(
-        "{LOGO}\nLoaded {} auctions from save\nMade by Tricked-dev - source: {SOURCE}",
+        "{LOGO}\nLoaded {} auctions from save\nMade by Tricked-dev - source: {SOURCE}\nSpeed: {:?}\nOverwrites {:?}, Save To Disk: {}, Update Seconds: {}",
         AUCTIONS.lock().unwrap().len(),
+        now.elapsed(),
+        &CONFIG.overwrites,
+        &CONFIG.save_to_disk,
+        &CONFIG.update_seconds,
     );
-    let seconds = env::var(UPDATE_SECONDS).map_or(60, |f| f.parse().unwrap());
+
     set_interval(
         || async {
             if let Err(e) = fetch_auctions().await {
                 println!("Error occured while fetching auctions {e:?}")
             }
         },
-        Duration::from_secs(seconds),
+        Duration::from_secs(CONFIG.update_seconds),
     );
 
-    if env::var(SAVE_TO_DISK).unwrap_or_else(|_| "1".to_owned()) != "0" {
+    if CONFIG.save_to_disk {
         ctrlc::set_handler(move || {
             fs::write(
                 "auctions.json",

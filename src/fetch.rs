@@ -2,7 +2,7 @@ use crate::{
     bazaar::get as get_bazaar,
     nbt_utils::{Item, Pet},
     webhook::*,
-    AUCTIONS, HTTP_CLIENT, OVERWRITES,
+    AUCTIONS, CONFIG, HTTP_CLIENT,
 };
 
 use anyhow::{anyhow, Result};
@@ -90,7 +90,7 @@ pub async fn fetch_auctions() -> Result<()> {
     let mut new_auctions = DashMap::new();
     new_auctions.extend(auctions.clone());
     drop(auctions);
-    new_auctions.extend(OVERWRITES.clone());
+    new_auctions.extend(CONFIG.overwrites.clone());
 
     // It only sends if the WEBHOOK_URL env var is set
     send_embed(Message::new(

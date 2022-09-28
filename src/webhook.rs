@@ -1,4 +1,4 @@
-use crate::{HTTP_CLIENT, WEBHOOK_URL};
+use crate::{CONFIG, HTTP_CLIENT};
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 
@@ -23,7 +23,7 @@ impl Embed {
     }
 }
 pub async fn send_embed(msg: Message) -> Result<()> {
-    if let Some(webhook) = &*WEBHOOK_URL {
+    if let Some(webhook) = &CONFIG.webhook_url {
         HTTP_CLIENT
             .post(webhook)
             .body_json(&msg)
