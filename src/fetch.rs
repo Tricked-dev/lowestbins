@@ -112,6 +112,7 @@ pub async fn fetch_auctions() -> Result<()> {
 
     Ok(())
 }
+
 pub fn parse_hypixel(auctions: Vec<Item>, map: &DashMap<String, u64>) {
     for auction in auctions.iter() {
         if auction.bin {

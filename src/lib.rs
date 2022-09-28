@@ -10,6 +10,8 @@ use surf::{Client, Config};
 
 static UPDATE_SECONDS: &str = "UPDATE_SECONDS";
 static SAVE_TO_DISK: &str = "SAVE_TO_DISK";
+static OVERWRITES: &str = "OVERWRITES";
+static WEBHOOK_URL: &str = "WEBHOOK_URL";
 static PORT: &str = "PORT";
 static HOST: &str = "HOST";
 
@@ -30,16 +32,16 @@ impl Conf {
         let save_to_disk = env::var(SAVE_TO_DISK).unwrap_or_else(|_| "1".to_owned());
         let update_seconds = env::var(UPDATE_SECONDS).map_or(60, |f| f.parse().unwrap());
         Self {
-            webhook_url: env::var("WEBHOOK_URL").ok(),
+            webhook_url: env::var(WEBHOOK_URL).ok(),
             overwrites: Conf::get_overwrites(),
-            host: host,
+            host,
             port: port.parse().unwrap(),
             save_to_disk: save_to_disk != "0",
-            update_seconds: update_seconds,
+            update_seconds,
         }
     }
     fn get_overwrites() -> HashMap<String, u64> {
-        let overwrites = env::var("OVERWRITES").unwrap_or_default();
+        let overwrites = env::var(OVERWRITES).unwrap_or_default();
         let mut map = HashMap::new();
         for overwrite in overwrites.split(',') {
             let mut split = overwrite.split(':');
