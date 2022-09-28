@@ -1,6 +1,5 @@
 use crate::{HTTP_CLIENT, WEBHOOK_URL};
 use anyhow::{anyhow, Result};
-
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]

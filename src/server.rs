@@ -7,10 +7,12 @@ use std::env;
 use crate::AUCTIONS;
 
 static NOTFOUND: &[u8] = b"Not Found";
+static PORT: &str = "PORT";
+static HOST: &str = "HOST";
 
 pub async fn start_server() -> Result<()> {
-    let port = env::var("PORT").unwrap_or("8080".to_string());
-    let host = env::var("HOST").unwrap_or("127.0.0.1".to_owned());
+    let port = env::var(PORT).unwrap_or_else(|_| "8080".to_string());
+    let host = env::var(HOST).unwrap_or_else(|_| "127.0.0.1".to_owned());
     let addr = format!("{host}:{port}").parse().unwrap();
 
     let make_service = make_service_fn(|_| async { Ok::<_, hyper::Error>(service_fn(response)) });

@@ -9,9 +9,12 @@ use lowestbins::AUCTIONS;
 use tokio::time;
 use tokio::time::Duration;
 
+static UPDATE_SECONDS: &str = "UPDATE_SECONDS";
+static SAVE_TO_DISK: &str = "SAVE_TO_DISK";
+
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let seconds = env::var("UPDATE_SECONDS").map_or(60, |f| f.parse().unwrap());
+    let seconds = env::var(UPDATE_SECONDS).map_or(60, |f| f.parse().unwrap());
     set_interval(
         || async {
             if let Err(e) = fetch_auctions().await {
@@ -21,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Duration::from_secs(seconds),
     );
 
-    if env::var("SAVE_TO_DISK").unwrap_or("1".to_owned()) != "0" {
+    if env::var(SAVE_TO_DISK).unwrap_or_else(|_| "1".to_owned()) != "0" {
         ctrlc::set_handler(move || {
             fs::write(
                 "auctions.json",

@@ -132,14 +132,13 @@ pub fn parse_hypixel(auctions: Vec<Item>, map: &DashMap<String, u64>) {
             match id.as_str() {
                 "POTION" => match &nbt.tag.extra_attributes.potion {
                     Some(x) => match &nbt.tag.extra_attributes.potion_level {
-                        Some(y) => match &nbt.tag.extra_attributes.enhanced {
-                            true => {
+                        Some(y) => {
+                            if nbt.tag.extra_attributes.enhanced {
                                 id = format!("POTION-{}-{}-ENHANCED", x.to_ascii_uppercase(), y);
-                            }
-                            false => {
+                            } else {
                                 id = format!("POTION-{}-{}", x.to_ascii_uppercase(), y);
                             }
-                        },
+                        }
                         None => {
                             id = format!("POTION-{}", x.to_ascii_uppercase());
                         }

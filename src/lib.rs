@@ -26,7 +26,7 @@ lazy_static::lazy_static! {
         .unwrap();
    pub static ref WEBHOOK_URL: Option<String> = env::var("WEBHOOK_URL").ok();
    pub static ref OVERWRITES: HashMap<String,u64> = {
-      let overwrites = env::var("OVERWRITES").unwrap_or("".to_string());
+      let overwrites = env::var("OVERWRITES").unwrap_or_default();
       let mut map = HashMap::new();
       for overwrite in overwrites.split(',') {
          let mut split = overwrite.split(':');

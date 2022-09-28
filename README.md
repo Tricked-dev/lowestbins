@@ -1,5 +1,10 @@
 # Lowestbins-rs
 
+[![GitHub issues](https://img.shields.io/github/issues/Tricked-dev/lowestbins)](https://github.com/Tricked-dev/lowestbins/issues) [![GitHub forks](https://img.shields.io/github/forks/Tricked-dev/lowestbins)](https://github.com/Tricked-dev/lowestbins/network)
+[![GitHub stars](https://img.shields.io/github/stars/Tricked-dev/lowestbins)](https://github.com/Tricked-dev/lowestbins/stargazers)
+[![GitHub license](https://img.shields.io/github/license/Tricked-dev/lowestbins)](https://github.com/Tricked-dev/lowestbins/blob/master/LICENSE)
+![Website](https://img.shields.io/website?url=https%3A%2F%2Flb.tricked.pro%2F)
+
 A fast and effecient lowestbins implementation this uses parrallel requests to fetch all lowestbins in less than **3.5 SECONDS** and uses the hyper server allowing for practically unlimited requests per second while only using 50mb of ram!
 
 ## Hosted Instance
