@@ -2,6 +2,7 @@ pub mod bazaar;
 pub mod fetch;
 pub mod nbt_utils;
 pub mod server;
+pub mod webhook;
 
 use std::collections::HashMap;
 use std::env;
@@ -23,6 +24,7 @@ lazy_static::lazy_static! {
         .set_timeout(Some(Duration::from_secs(50)))
         .try_into()
         .unwrap();
+   pub static ref WEBHOOK_URL: Option<String> = env::var("WEBHOOK_URL").ok();
    pub static ref OVERWRITES: HashMap<String,u64> = {
       let overwrites = env::var("OVERWRITES").unwrap_or("".to_string());
       let mut map = HashMap::new();

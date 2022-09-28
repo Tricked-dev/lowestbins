@@ -7,3 +7,4 @@ debug.log
 info.log
 memory-profiling_*.dat
 auctions.json
+.env

@@ -24,6 +24,7 @@ SAVE_TO_DISK # set to 0 to not save the auctions to disk
 PARRALELL # The amount of parrallel requests to make (advanced usage)
 OVERWRITES # Overwrite values format: `BLESSED_BAIT:200,ROCK_CANDY:6000,NON_EXISTENT_ITEM:200`
 UPDATE_SECONDS # The amount of seconds to wait before updating the lowestbins
+WEBHOOK_URL # The webhook url used for reporting the requests (discord/discord compatible)
 ```
 
 ## Features
@@ -34,3 +35,7 @@ UPDATE_SECONDS # The amount of seconds to wait before updating the lowestbins
 - \+prob more things
 
 > Licensed under the [Apache 2](./LICENSE) License
+
+```
+
+```

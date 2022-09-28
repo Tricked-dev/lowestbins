@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
-use serde_json;
 
 use crate::HTTP_CLIENT;
 

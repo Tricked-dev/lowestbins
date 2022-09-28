@@ -1,5 +1,6 @@
 use crate::bazaar::get as get_bazaar;
 use crate::nbt_utils::{Item, Pet};
+use crate::webhook::*;
 use crate::AUCTIONS;
 use crate::{HTTP_CLIENT, OVERWRITES};
 
@@ -40,7 +41,7 @@ pub async fn get(page: i64) -> Result<HypixelResponse> {
     return Ok(serde_json::from_slice(&text)?);
 }
 
-async fn get_auctions(page: i64, auctions: &DashMap<String, u64>) {
+async fn get_auctions(page: i64, auctions: &DashMap<String, u64>) -> Result<()> {
     let res = get(page).await;
     match res {
         Ok(res) => {
@@ -57,17 +58,19 @@ async fn get_auctions(page: i64, auctions: &DashMap<String, u64>) {
             }
         }
         Err(e) => {
-            eprintln!("{e:?}");
+            send_webhook_text(&format!("Error: {:?}", e)).await?;
         }
     };
+    Ok(())
 }
 
-pub async fn get_bazaar_products(auctions: &DashMap<String, u64>) {
-    let bz = get_bazaar().await.unwrap();
+pub async fn get_bazaar_products(auctions: &DashMap<String, u64>) -> Result<()> {
+    let bz = get_bazaar().await?;
     let prods = bz.products;
     for (key, val) in prods.iter() {
         auctions.insert(key.to_owned(), val.quick_status.buy_price.round() as u64);
     }
+    Ok(())
 }
 
 pub async fn fetch_auctions() -> Result<()> {
@@ -85,18 +88,32 @@ pub async fn fetch_auctions() -> Result<()> {
     futures.push(get_bazaar_products(&auctions).boxed());
 
     let _: Vec<_> = futures.collect().await;
-    println!("fetch time: {:?}", n.elapsed());
-    println!("fetched: {}", auctions.len());
+    let fetched = auctions.len();
+    let fetch_time = n.elapsed();
 
     let mut new_auctions = DashMap::new();
     new_auctions.extend(auctions.clone());
     drop(auctions);
     new_auctions.extend(OVERWRITES.clone());
 
+    // It only sends if the WEBHOOK_URL env var is set
+    send_embed(Message::new(
+        "Auctions updated".to_owned(),
+        vec![Embed::new(
+            "Auctions updated".to_owned(),
+            format!(
+                "Fetched: {}\nFetch Time: {:?}\nTime: {:?}",
+                fetched,
+                fetch_time,
+                start.elapsed()
+            ),
+        )],
+    ))
+    .await?;
+
     let mut auc = AUCTIONS.lock().unwrap();
     auc.extend(new_auctions);
-    println!("total: {}", &auc.len());
-    println!("Time: {:?}", start.elapsed());
+
     Ok(())
 }
 pub fn parse_hypixel(auctions: Vec<Item>, map: &DashMap<String, u64>) {
