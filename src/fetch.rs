@@ -1,12 +1,18 @@
 use crate::bazaar::get as get_bazaar;
 use crate::nbt_utils::{Item, Pet};
-use crate::{AUCTIONS, PARRALEL};
+use crate::AUCTIONS;
 use crate::{HTTP_CLIENT, OVERWRITES};
 
 use anyhow::{anyhow, Result};
 use dashmap::DashMap;
+use futures::stream::FuturesUnordered;
+use futures::FutureExt;
 use futures::{stream, StreamExt};
 use serde::{Deserialize, Serialize};
+
+use std::fmt::Write;
+use std::sync::{Arc, Mutex};
+use std::{fs, time::Instant};
 
 #[derive(Serialize, Deserialize)]
 pub struct HypixelResponse {
@@ -34,61 +40,63 @@ pub async fn get(page: i64) -> Result<HypixelResponse> {
     Ok(serde_json::from_slice(&text)?)
 }
 
-pub async fn fetch_auctions() -> Result<()> {
-    let start = std::time::Instant::now();
-    let hs = get(1).await?;
+async fn get_auctions(page: i64, auctions: &DashMap<String, u64>) {
+    let res = get(page).await;
+    match res {
+        Ok(res) => {
+            let map = DashMap::new();
+            parse_hypixel(res.auctions, &map);
 
-    let mut auctions: DashMap<String, u64> = DashMap::new();
-    parse_hypixel(hs.auctions, &auctions);
-    let bodies = stream::iter(2..hs.total_pages)
-        .map(|url| async move {
-            let res = get(url).await;
-            match res {
-                Ok(res) => {
-                    let map = DashMap::new();
-                    parse_hypixel(res.auctions, &map);
-                    return Some(map);
+            for (x, y) in map.into_iter() {
+                if let Some(s) = auctions.get(&x) {
+                    if *s < y {
+                        continue;
+                    };
                 }
-                Err(e) => {
-                    eprintln!("{e:?}");
-                    None
-                }
+                auctions.insert(x.to_owned(), y);
             }
-        })
-        .buffer_unordered(*PARRALEL);
+        }
+        Err(e) => {
+            eprintln!("{e:?}");
+        }
+    };
+}
 
-    bodies
-        .for_each(|res: Option<DashMap<String, u64>>| async {
-            if let Some(res) = res {
-                for (x, y) in res.into_iter() {
-                    if let Some(s) = auctions.get(&x) {
-                        if *s < y {
-                            continue;
-                        };
-                    }
-                    auctions.insert(x.to_owned(), y);
-                }
-            };
-        })
-        .await;
-    println!("{}", &auctions.len());
-    let bz = get_bazaar().await?;
+pub async fn get_bazaar_products(auctions: &DashMap<String, u64>) {
+    let bz = get_bazaar().await.unwrap();
     let prods = bz.products;
     for (key, val) in prods.iter() {
         auctions.insert(key.to_owned(), val.quick_status.buy_price.round() as u64);
     }
-    auctions.extend(OVERWRITES.clone());
-    let xs = serde_json::to_vec(&auctions)?;
+}
+
+pub async fn fetch_auctions() -> Result<()> {
+    let start = std::time::Instant::now();
+    let hs = get(1).await?;
+
+    let auctions: DashMap<String, u64> = DashMap::new();
+    parse_hypixel(hs.auctions, &auctions);
+
+    let futures = FuturesUnordered::new();
+    let n = Instant::now();
+    for url in 1..hs.total_pages {
+        futures.push(get_auctions(url, &auctions).boxed());
+    }
+    futures.push(get_bazaar_products(&auctions).boxed());
+
+    let _: Vec<_> = futures.collect().await;
+    println!("fetch time: {:?}", n.elapsed());
+    println!("fetched: {}", auctions.len());
+
+    let mut new_auctions = DashMap::new();
+    new_auctions.extend(auctions.clone());
+    drop(auctions);
+    new_auctions.extend(OVERWRITES.clone());
 
     let mut auc = AUCTIONS.lock().unwrap();
-    println!("fetched: {}", auctions.len());
-    auc.extend(auctions);
+    auc.extend(new_auctions);
     println!("total: {}", &auc.len());
-    println!(
-        "size: {}KB\nFetched auctions in {:?}",
-        xs.len() / 1000,
-        start.elapsed()
-    );
+    println!("Time: {:?}", start.elapsed());
     Ok(())
 }
 pub fn parse_hypixel(auctions: Vec<Item>, map: &DashMap<String, u64>) {
