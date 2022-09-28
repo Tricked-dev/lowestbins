@@ -1,0 +1,14 @@
+FROM debian:stable-slim
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+RUN  addgroup --gid 1000 runner && \
+    adduser --uid 1000 --home /data --ingroup runner --disabled-password runner
+
+USER runner
+
+VOLUME /data
+WORKDIR /data
+
+EXPOSE 8080/tcp
+COPY lowestbins ./
+CMD ["./lowestbins"]

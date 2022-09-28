@@ -29,6 +29,16 @@ jobs:
 
       - name: Build
         run: cargo build --release --no-default-features
+      - run: cp target/release/lowestbins .
+      - run: rm -rf target/
+      - name: Build and push
+        uses: mr-smithers-excellent/docker-build-push@v5
+        with:
+          registry: ghcr.io
+          image: "lowestbins"
+          dockerfile: Dockerfile.prebuild
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
 
       - uses: actions/upload-artifact@v2
         with:
