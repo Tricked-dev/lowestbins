@@ -8,6 +8,7 @@ use crate::{
 use anyhow::{anyhow, Result};
 use dashmap::DashMap;
 use futures::{stream::FuturesUnordered, FutureExt, StreamExt};
+use isahc::AsyncReadResponseExt;
 use serde::{Deserialize, Serialize};
 
 use std::time::Instant;
@@ -24,13 +25,13 @@ pub struct HypixelResponse {
 
 pub async fn get(page: i64) -> Result<HypixelResponse> {
     let mut text = HTTP_CLIENT
-        .get(format!("https://api.hypixel.net/skyblock/auctions?page={}", page))
-        .send()
+        .get_async(&format!("https://api.hypixel.net/skyblock/auctions?page={}", page))
         .await
         .map_err(|x| anyhow!(x))?
-        .body_bytes()
+        .bytes()
         .await
-        .map_err(|x| anyhow!(x))?;
+        .unwrap();
+
     #[cfg(feature = "simd")]
     return Ok(simd_json::from_slice(&mut text)?);
     #[cfg(not(feature = "simd"))]

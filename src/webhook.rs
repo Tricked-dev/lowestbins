@@ -25,10 +25,7 @@ impl Embed {
 pub async fn send_embed(msg: Message) -> Result<()> {
     if let Some(webhook) = &CONFIG.webhook_url {
         HTTP_CLIENT
-            .post(webhook)
-            .body_json(&msg)
-            .map_err(|x| anyhow!(x))?
-            .send()
+            .post_async(webhook, serde_json::to_string(&msg)?)
             .await
             .map_err(|x| anyhow!(x))?;
     }

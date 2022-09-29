@@ -6,7 +6,12 @@ pub mod webhook;
 
 use std::{collections::HashMap, env, fs, sync::Mutex, time::Duration};
 
-use surf::{Client, Config};
+use isahc::{
+    config::{NetworkInterface, VersionNegotiation},
+    prelude::*,
+    HttpClient, Request,
+};
+use std::net::IpAddr;
 
 static UPDATE_SECONDS: &str = "UPDATE_SECONDS";
 static SAVE_TO_DISK: &str = "SAVE_TO_DISK";
@@ -64,9 +69,12 @@ lazy_static::lazy_static! {
       res.extend(map.into_iter().map(|(k, v)| (k, v.round() as u64)));
       Mutex::new(res)
    };
-   pub static ref HTTP_CLIENT: Client = Config::new()
-        .set_timeout(Some(Duration::from_secs(50)))
-        .try_into()
-        .unwrap();
+   pub static ref HTTP_CLIENT: HttpClient = HttpClient::builder()
+    .tcp_keepalive(Duration::from_secs(30))
+    .interface(NetworkInterface::any())
+    .connect_timeout(Duration::from_secs(5))
+    .version_negotiation(VersionNegotiation::http2())
+    .build()
+    .unwrap();
    pub static ref CONFIG: Conf = Conf::init();
 }

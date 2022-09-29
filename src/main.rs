@@ -7,14 +7,13 @@ use lowestbins::{
     AUCTIONS, CONFIG,
 };
 use tokio::{time, time::Duration};
-use tracing::Level;
-use tracing_subscriber::FmtSubscriber;
 
 static LOGO: &str = include_str!(concat!(env!("OUT_DIR"), "/logo.txt"));
 static SOURCE: &str = "https://github.com/Tricked-dev/lowestbins";
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    tracing_subscriber::fmt::init();
     let now = time::Instant::now();
     get(1).await?;
     println!(
@@ -25,8 +24,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         &CONFIG.save_to_disk,
         &CONFIG.update_seconds,
     );
-    let subscriber = FmtSubscriber::builder().with_max_level(Level::DEBUG).finish();
-    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
     set_interval(
         || async {

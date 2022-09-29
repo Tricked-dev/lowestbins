@@ -37,15 +37,10 @@ serde = { version = "1", features = [
 ] }
 serde_json = "1.0"
 simd-json = { version = "0.6", optional = true }
-surf = { version = "2.3", default-features = false, features = [
-    "curl-client",
-    "rustls_crate",
-] }
 tokio = { version = "1", features = [
     "rt",
     "rt-multi-thread",
     "macros",
-    "tracing",
 ] }
 ctrlc = "3.2"
 tracing = { version = "0", features = [
@@ -54,3 +49,4 @@ tracing = { version = "0", features = [
 ] }
 rustls = "0"
 tracing-subscriber = "0.3.15"
+isahc = { version = "1.7.2", features = ["serde", "serde_json"] }

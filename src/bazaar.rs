@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
+use isahc::AsyncReadResponseExt;
 use serde::{Deserialize, Serialize};
 
 use crate::HTTP_CLIENT;
@@ -27,11 +28,10 @@ pub struct QuickStatus {
 }
 pub async fn get() -> Result<BazaarResponse> {
     let mut text = HTTP_CLIENT
-        .get("https://api.hypixel.net/skyblock/bazaar")
-        .send()
+        .get_async("https://api.hypixel.net/skyblock/bazaar")
         .await
         .map_err(|x| anyhow!(x))?
-        .body_bytes()
+        .bytes()
         .await
         .map_err(|x| anyhow!(x))?;
 
