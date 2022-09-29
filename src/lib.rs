@@ -12,12 +12,17 @@ use isahc::{
     HttpClient,
 };
 
-static UPDATE_SECONDS: &str = "UPDATE_SECONDS";
-static SAVE_TO_DISK: &str = "SAVE_TO_DISK";
-static OVERWRITES: &str = "OVERWRITES";
-static WEBHOOK_URL: &str = "WEBHOOK_URL";
-static PORT: &str = "PORT";
-static HOST: &str = "HOST";
+const UPDATE_SECONDS: &str = "UPDATE_SECONDS";
+const SAVE_TO_DISK: &str = "SAVE_TO_DISK";
+const OVERWRITES: &str = "OVERWRITES";
+const WEBHOOK_URL: &str = "WEBHOOK_URL";
+const PORT: &str = "PORT";
+const HOST: &str = "HOST";
+
+#[cfg(feature = "local")]
+const API_UR: &str = "http://0.0.0.0:8000";
+#[cfg(not(feature = "local"))]
+const API_UR: &str = "https://api.hypixel.net";
 
 #[derive(Debug)]
 pub struct Conf {
@@ -74,6 +79,7 @@ lazy_static::lazy_static! {
         .default_header("user-agent", "Lowestbins/1.3.0")
         .connect_timeout(Duration::from_secs(10))
         .version_negotiation(VersionNegotiation::http2())
+        .metrics(false).tcp_nodelay()
         .build()
         .unwrap();
    pub static ref CONFIG: Conf = Conf::init();

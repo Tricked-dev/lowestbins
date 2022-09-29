@@ -2,7 +2,7 @@ use crate::{
     bazaar::get as get_bazaar,
     nbt_utils::{Item, Pet},
     webhook::*,
-    AUCTIONS, CONFIG, HTTP_CLIENT,
+    API_UR, AUCTIONS, CONFIG, HTTP_CLIENT,
 };
 
 use anyhow::{anyhow, Result};
@@ -25,7 +25,7 @@ pub struct HypixelResponse {
 
 pub async fn get(page: i64) -> Result<HypixelResponse> {
     let mut text = HTTP_CLIENT
-        .get_async(&format!("https://api.hypixel.net/skyblock/auctions?page={}", page))
+        .get_async(&format!("{API_UR}/skyblock/auctions?page={}", page))
         .await
         .map_err(|x| anyhow!(x))?
         .bytes()
@@ -72,7 +72,7 @@ pub async fn get_bazaar_products(auctions: &DashMap<String, u64>) -> Result<()> 
 
 pub async fn fetch_auctions() -> Result<()> {
     let start = std::time::Instant::now();
-    let hs = get(1).await?;
+    let hs = get(0).await?;
 
     let auctions: DashMap<String, u64> = DashMap::new();
     parse_hypixel(hs.auctions, &auctions);

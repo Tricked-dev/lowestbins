@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 use isahc::AsyncReadResponseExt;
 use serde::{Deserialize, Serialize};
 
-use crate::HTTP_CLIENT;
+use crate::{API_UR, HTTP_CLIENT};
 
 #[derive(Serialize, Deserialize)]
 pub struct BazaarResponse {
@@ -28,7 +28,7 @@ pub struct QuickStatus {
 }
 pub async fn get() -> Result<BazaarResponse> {
     let mut text = HTTP_CLIENT
-        .get_async("https://api.hypixel.net/skyblock/bazaar")
+        .get_async(format!("{API_UR}/skyblock/bazaar"))
         .await
         .map_err(|x| anyhow!(x))?
         .bytes()

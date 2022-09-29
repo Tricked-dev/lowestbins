@@ -1,0 +1,26 @@
+[package]
+name = "bench-lb"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "fetch"
+path = "src/fetch.rs"
+
+[dependencies]
+rust-embed = "6.4.1"
+serde = { version = "1.0.145", features = [
+    "derive",
+] }
+lowestbins = { path = "../", features = [
+    "local",
+] }
+anyhow = { version = "1.0.65", features = [
+    "backtrace",
+] }
+axum = "0.5.16"
+tokio = { version = "1.21.2", features = [
+    "full",
+] }

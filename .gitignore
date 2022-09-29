@@ -8,3 +8,4 @@ info.log
 memory-profiling_*.dat
 auctions.json
 .env
+bench-lb/pages
