@@ -9,9 +9,8 @@ use std::{collections::HashMap, env, fs, sync::Mutex, time::Duration};
 use isahc::{
     config::{NetworkInterface, VersionNegotiation},
     prelude::*,
-    HttpClient, Request,
+    HttpClient,
 };
-use std::net::IpAddr;
 
 static UPDATE_SECONDS: &str = "UPDATE_SECONDS";
 static SAVE_TO_DISK: &str = "SAVE_TO_DISK";
@@ -70,12 +69,12 @@ lazy_static::lazy_static! {
       Mutex::new(res)
    };
    pub static ref HTTP_CLIENT: HttpClient = HttpClient::builder()
-    .tcp_keepalive(Duration::from_secs(30))
-    .interface(NetworkInterface::any())
-    .default_header("user-agent", "Lowestbins/1.3.0")
-    .connect_timeout(Duration::from_secs(10))
-    .version_negotiation(VersionNegotiation::http2())
-    .build()
-    .unwrap();
+        .tcp_keepalive(Duration::from_secs(30))
+        .interface(NetworkInterface::any())
+        .default_header("user-agent", "Lowestbins/1.3.0")
+        .connect_timeout(Duration::from_secs(10))
+        .version_negotiation(VersionNegotiation::http2())
+        .build()
+        .unwrap();
    pub static ref CONFIG: Conf = Conf::init();
 }

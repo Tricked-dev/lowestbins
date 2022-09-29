@@ -1,6 +1,6 @@
 use crate::{CONFIG, HTTP_CLIENT};
 use anyhow::{anyhow, Result};
-use isahc::{AsyncBody, AsyncReadResponseExt, Body, Request};
+use isahc::{AsyncBody, Request};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
