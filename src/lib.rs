@@ -72,7 +72,8 @@ lazy_static::lazy_static! {
    pub static ref HTTP_CLIENT: HttpClient = HttpClient::builder()
     .tcp_keepalive(Duration::from_secs(30))
     .interface(NetworkInterface::any())
-    .connect_timeout(Duration::from_secs(5))
+    .default_header("user-agent", "Lowestbins/1.3.0")
+    .connect_timeout(Duration::from_secs(10))
     .version_negotiation(VersionNegotiation::http2())
     .build()
     .unwrap();

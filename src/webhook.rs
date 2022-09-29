@@ -1,13 +1,14 @@
 use crate::{CONFIG, HTTP_CLIENT};
 use anyhow::{anyhow, Result};
+use isahc::{AsyncBody, AsyncReadResponseExt, Body, Request};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Embed {
     title: String,
     description: String,
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Message {
     content: String,
     embeds: Vec<Embed>,
@@ -24,10 +25,12 @@ impl Embed {
 }
 pub async fn send_embed(msg: Message) -> Result<()> {
     if let Some(webhook) = &CONFIG.webhook_url {
-        HTTP_CLIENT
-            .post_async(webhook, serde_json::to_string(&msg)?)
-            .await
-            .map_err(|x| anyhow!(x))?;
+        let req = Request::builder()
+            .method("POST")
+            .uri(webhook)
+            .header("Content-Type", "application/json")
+            .body(AsyncBody::from(serde_json::to_string(&msg)?))?;
+        HTTP_CLIENT.send_async(req).await.map_err(|x| anyhow!(x))?;
     }
 
     Ok(())
