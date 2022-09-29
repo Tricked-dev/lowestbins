@@ -1,16 +1,14 @@
+#![doc = include_str!("../README.md")]
+
 pub mod bazaar;
 pub mod fetch;
 pub mod nbt_utils;
 pub mod server;
 pub mod webhook;
 
-use std::{collections::HashMap, env, fs, sync::Mutex, time::Duration};
+use std::{collections::HashMap, env, fs, sync::Mutex};
 
-use isahc::{
-    config::{NetworkInterface, VersionNegotiation},
-    prelude::*,
-    HttpClient,
-};
+use isahc::HttpClient;
 
 const UPDATE_SECONDS: &str = "UPDATE_SECONDS";
 const SAVE_TO_DISK: &str = "SAVE_TO_DISK";
