@@ -92,6 +92,7 @@ pub async fn fetch_auctions() -> Result<()> {
     drop(auctions);
     new_auctions.extend(CONFIG.overwrites.clone());
 
+    tracing::debug!("Fetched {} auctions in {:?}", fetched, fetch_time);
     // It only sends if the WEBHOOK_URL env var is set
     send_embed(Message::new(
         "Auctions updated".to_owned(),
