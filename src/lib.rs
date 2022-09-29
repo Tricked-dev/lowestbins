@@ -74,12 +74,7 @@ lazy_static::lazy_static! {
       Mutex::new(res)
    };
    pub static ref HTTP_CLIENT: HttpClient = HttpClient::builder()
-        .tcp_keepalive(Duration::from_secs(30))
-        .interface(NetworkInterface::any())
         .default_header("user-agent", "Lowestbins/1.3.0")
-        .connect_timeout(Duration::from_secs(10))
-        .version_negotiation(VersionNegotiation::http2())
-        .metrics(false).tcp_nodelay()
         .build()
         .unwrap();
    pub static ref CONFIG: Conf = Conf::init();
