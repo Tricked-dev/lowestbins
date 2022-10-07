@@ -9,14 +9,12 @@ use anyhow::{anyhow, Result};
 use dashmap::DashMap;
 use futures::{stream::FuturesUnordered, FutureExt, StreamExt};
 use isahc::AsyncReadResponseExt;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use std::time::Instant;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct HypixelResponse {
-    #[serde(rename = "page")]
-    pub page: i64,
     #[serde(rename = "totalPages")]
     pub total_pages: i64,
     #[serde(rename = "auctions")]

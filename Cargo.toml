@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
 name = "lowestbins"
-version = "1.3.0"
+version = "1.3.1"
 authors = ["Tricked-dev <tricked@tricked.pro>"]
 description = "Lowestbins made in rust for maximum efficiency"
 repository = "https://github.com/tricked-dev/lowestbins"
@@ -21,6 +21,7 @@ exclude = [
 default = ["simd"]
 simd = ["simd-json"]
 local = []
+
 
 [profile.release]
 lto = true
@@ -74,6 +75,10 @@ isahc = { version = "1.7.2", features = [
     "serde",
     "serde_json",
 ] }
+
+[package.metadata.docs.rs]
+no-default-features = true
+
 [workspace]
 resolver = "2"
 members = [

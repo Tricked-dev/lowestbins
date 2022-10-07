@@ -2,26 +2,23 @@ use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
 use isahc::AsyncReadResponseExt;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::{API_UR, HTTP_CLIENT};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct BazaarResponse {
     #[serde(rename = "products")]
     pub products: HashMap<String, Product>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct Product {
-    #[serde(rename = "product_id")]
-    product_id: String,
-
     #[serde(rename = "quick_status")]
     pub quick_status: QuickStatus,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct QuickStatus {
     #[serde(rename = "buyPrice")]
     pub buy_price: f64,

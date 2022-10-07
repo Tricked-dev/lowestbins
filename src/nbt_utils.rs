@@ -1,5 +1,5 @@
 use nbt::from_gzip_reader;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::{collections::HashMap, io, result::Result as StdResult};
 
 #[derive(Deserialize)]
@@ -18,7 +18,7 @@ pub struct PartialTag {
     pub extra_attributes: PartialExtraAttr,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct Pet {
     #[serde(rename = "type")]
     pub pet_type: String,
@@ -47,7 +47,7 @@ pub struct DisplayInfo {
     pub name: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Deserialize, Debug, PartialEq, Eq, Clone)]
 pub struct Item {
     #[serde(rename = "item_name")]
     pub name: String,
@@ -76,7 +76,7 @@ impl Item {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Deserialize, Debug, PartialEq, Eq, Clone)]
 #[serde(untagged)]
 pub enum ItemBytes {
     T0(ItemBytesT0),
@@ -101,7 +101,7 @@ impl From<ItemBytes> for Result<Vec<u8>, Box<dyn std::error::Error>> {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Deserialize, Debug, PartialEq, Eq, Clone)]
 #[serde(tag = "type", content = "data")]
 pub enum ItemBytesT0 {
     #[serde(rename = "0")]

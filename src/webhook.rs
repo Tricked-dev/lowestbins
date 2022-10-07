@@ -1,14 +1,14 @@
 use crate::{CONFIG, HTTP_CLIENT};
 use anyhow::{anyhow, Result};
 use isahc::{AsyncBody, Request};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
 pub struct Embed {
     title: String,
     description: String,
 }
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
 pub struct Message {
     content: String,
     embeds: Vec<Embed>,
