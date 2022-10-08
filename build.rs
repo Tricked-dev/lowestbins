@@ -30,9 +30,12 @@ fn main() {
     if fs::read(&output).is_err() {
         let _cmd = Command::new("curl")
             .arg("-o")
-            .arg(output)
+            .arg(&output)
             .arg(LOC)
             .output()
             .expect("failed to execute process");
+    }
+    if fs::read(&output).is_err() {
+        fs::write(&output, r#"{}"#).unwrap();
     }
 }
