@@ -9,6 +9,8 @@ pub struct PartialNbt {
 
 #[derive(Deserialize)]
 pub struct PartialNbtElement {
+    #[serde(rename = "Count")]
+    pub count: u8,
     pub tag: PartialTag,
 }
 
@@ -51,9 +53,6 @@ pub struct DisplayInfo {
 pub struct Item {
     #[serde(rename = "item_name")]
     pub name: String,
-    /// The count of items in the stack
-    #[serde(rename = "item_count", default = "one")]
-    pub count: u8,
     /// The item's gzipped NBT representation
     #[serde(rename = "item_bytes")]
     pub bytes: ItemBytes,
@@ -64,9 +63,6 @@ pub struct Item {
 }
 fn bool_false() -> bool {
     false
-}
-fn one() -> u8 {
-    1
 }
 impl Item {
     pub fn to_nbt(&self) -> Result<PartialNbt, Box<dyn std::error::Error>> {

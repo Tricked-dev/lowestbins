@@ -1,10 +1,14 @@
 #![doc = include_str!("../README.md")]
+#![feature(test)]
 
 pub mod bazaar;
 pub mod fetch;
 pub mod nbt_utils;
 pub mod server;
 pub mod webhook;
+
+#[cfg(test)]
+mod bench;
 
 use std::{collections::HashMap, env, fs, sync::Mutex};
 
