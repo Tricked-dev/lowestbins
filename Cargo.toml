@@ -54,9 +54,13 @@ tracing = { version = "0", features = ["log", "async-await"] }
 tracing-subscriber = "0.3.15"
 isahc = { version = "1.7.2", features = ["serde", "serde_json"] }
 
+[dev-dependencies]
+criterion = { version = "0.3", features = ["html_reports"] }
+flate2 = "1.0.24"
+
+[[bench]]
+name = "bench_main"
+harness = false
+
 [package.metadata.docs.rs]
 no-default-features = true
-
-[workspace]
-resolver = "2"
-members = [".", "bench-lb"]

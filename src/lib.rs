@@ -7,9 +7,6 @@ pub mod nbt_utils;
 pub mod server;
 pub mod webhook;
 
-#[cfg(test)]
-mod bench;
-
 use std::{collections::HashMap, env, fs, sync::Mutex};
 
 use isahc::HttpClient;

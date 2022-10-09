@@ -119,9 +119,6 @@ pub fn parse_hypixel(auctions: Vec<Item>, map: &DashMap<String, u64>) {
             let nbt = &auction.to_nbt().unwrap().i[0];
             let mut id = nbt.tag.extra_attributes.id.clone();
             let count = nbt.count;
-            if count != 1 {
-                println!("{}", count);
-            }
             match &nbt.tag.extra_attributes.pet {
                 Some(x) => {
                     let v: Pet = serde_json::from_str(x).unwrap();
