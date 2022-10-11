@@ -50,6 +50,7 @@ SAVE_TO_DISK # set to 0 to not save the auctions to disk
 OVERWRITES # Overwrite values format: `BLESSED_BAIT:200,ROCK_CANDY:6000,NON_EXISTENT_ITEM:200`
 UPDATE_SECONDS # The amount of seconds to wait before updating the lowestbins
 WEBHOOK_URL # The webhook url used for reporting the requests (discord/discord compatible)
+RUST_LOG # The log level lowestbins=debug recommended
 ```
 
 ## Features

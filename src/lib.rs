@@ -7,6 +7,15 @@ pub mod nbt_utils;
 pub mod server;
 pub mod webhook;
 
+const UA: &str = concat!(
+    env!("CARGO_PKG_NAME"),
+    "/",
+    env!("CARGO_PKG_VERSION"),
+    " (",
+    env!("CARGO_PKG_REPOSITORY"),
+    ")"
+);
+
 use std::{collections::HashMap, env, fs, sync::Mutex};
 
 use isahc::HttpClient;
@@ -73,7 +82,7 @@ lazy_static::lazy_static! {
       Mutex::new(res)
    };
    pub static ref HTTP_CLIENT: HttpClient = HttpClient::builder()
-        .default_header("user-agent", "Lowestbins/1.3.0")
+        .default_header("user-agent", UA)
         .build()
         .unwrap();
    pub static ref CONFIG: Conf = Conf::init();
