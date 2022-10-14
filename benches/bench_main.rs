@@ -40,7 +40,7 @@ fn parse_hypixel_auctions(c: &mut Criterion) {
     let mut s = String::new();
     gz.read_to_string(&mut s).unwrap();
     let items = s
-        .split('\n')
+        .lines()
         .map(|x| serde_json::from_str::<HypixelResponse>(x).unwrap())
         .collect::<Vec<_>>();
     c.bench_function("Parsing Hypixel Responses", move |b| {

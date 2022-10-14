@@ -19,6 +19,7 @@ const UA: &str = concat!(
 use std::{collections::HashMap, env, fs, sync::Mutex};
 
 use isahc::HttpClient;
+use once_cell::sync::Lazy;
 
 const UPDATE_SECONDS: &str = "UPDATE_SECONDS";
 const SAVE_TO_DISK: &str = "SAVE_TO_DISK";
@@ -71,19 +72,16 @@ impl Conf {
     }
 }
 
-lazy_static::lazy_static! {
-   pub static ref AUCTIONS: Mutex<HashMap<String, u64>> ={
-      let defaults = include_bytes!(concat!(env!("OUT_DIR"), "/sellprices.json"));
-      let mut res: HashMap<String, u64> = fs::read("auctions.json")
-            .map(|x| serde_json::from_slice(&x).unwrap())
-            .unwrap_or_default();
-      let map = serde_json::from_slice::<HashMap<String, f64>>(defaults).unwrap();
-      res.extend(map.into_iter().map(|(k, v)| (k, v.round() as u64)));
-      Mutex::new(res)
-   };
-   pub static ref HTTP_CLIENT: HttpClient = HttpClient::builder()
-        .default_header("user-agent", UA)
-        .build()
-        .unwrap();
-   pub static ref CONFIG: Conf = Conf::init();
-}
+pub static CONFIG: Lazy<Conf> = Lazy::new(Conf::init);
+pub static HTTP_CLIENT: Lazy<HttpClient> =
+    Lazy::new(|| HttpClient::builder().default_header("user-agent", UA).build().unwrap());
+// Honestly there should be a better way to do this in a more memory efficient way i think?
+pub static AUCTIONS: Lazy<Mutex<HashMap<String, u64>>> = Lazy::new(|| {
+    let defaults = include_bytes!(concat!(env!("OUT_DIR"), "/sellprices.json"));
+    let mut res: HashMap<String, u64> = fs::read("auctions.json")
+        .map(|x| serde_json::from_slice(&x).unwrap())
+        .unwrap_or_default();
+    let map = serde_json::from_slice::<HashMap<String, f64>>(defaults).unwrap();
+    res.extend(map.into_iter().map(|(k, v)| (k, v.round() as u64)));
+    Mutex::new(res)
+});
