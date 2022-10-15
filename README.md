@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img alt="Logo" src=".github/assets/logo.png" width="400">
+<img alt="Logo" src=".github/assets/logo.png" width="200">
 
 [![GitHub issues](https://img.shields.io/github/issues/Tricked-dev/lowestbins)](https://github.com/Tricked-dev/lowestbins/issues) [![GitHub forks](https://img.shields.io/github/forks/Tricked-dev/lowestbins)](https://github.com/Tricked-dev/lowestbins/network)
 [![GitHub stars](https://img.shields.io/github/stars/Tricked-dev/lowestbins)](https://github.com/Tricked-dev/lowestbins/stargazers)
