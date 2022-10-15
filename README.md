@@ -26,6 +26,38 @@ A fast and effecient lowestbins implementation this uses parrallel requests to f
 
 If you are using this in a project please credit me! or sponsor me on github [github.com/sponsors/Tricked-dev](https://github.com/sponsors/Tricked-dev)
 
+## Using in your code
+
+### Javascript
+
+**node:**
+
+```js
+const fetch = require("undici"); // node-fetch also works
+let json = await fetch("https://lb.tricked.pro/lowestbins").then((res) =>
+  res.json()
+);
+
+console.log(json["ENCHANTMENT_ULTIMATE_SWARM_2"]);
+```
+
+**web/deno:**
+
+```js
+let json = await fetch("https://lb.tricked.pro/lowestbins").then((res) =>
+  res.json()
+);
+console.log(json["ENCHANTMENT_ULTIMATE_SWARM_2"]);
+```
+
+### Python
+
+```py
+import requests
+json = requests.get("https://lb.tricked.pro/lowestbins").json()
+print(json["ENCHANTMENT_ULTIMATE_SWARM_2"])
+```
+
 ## Usage
 
 ### Docker
