@@ -27,11 +27,10 @@ const OVERWRITES: &str = "OVERWRITES";
 const WEBHOOK_URL: &str = "WEBHOOK_URL";
 const PORT: &str = "PORT";
 const HOST: &str = "HOST";
+const API_URL_ENV: &str = "API_URL";
 
-#[cfg(feature = "local")]
-const API_UR: &str = "http://0.0.0.0:8000";
-#[cfg(not(feature = "local"))]
-const API_UR: &str = "https://api.hypixel.net";
+pub static API_URL: Lazy<String> =
+    Lazy::new(|| env::var(API_URL_ENV).unwrap_or_else(|_| "https://api.hypixel.net".to_owned()));
 
 #[derive(Debug)]
 pub struct Conf {
