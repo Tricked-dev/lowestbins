@@ -1,6 +1,6 @@
 use std::{env, fs, process};
 
-use futures::Future;
+use futures_util::Future;
 use lowestbins::{
     fetch::{fetch_auctions, get},
     server::start_server,

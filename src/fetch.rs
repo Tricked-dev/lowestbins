@@ -7,7 +7,7 @@ use crate::{
 
 use anyhow::{anyhow, Result};
 use dashmap::DashMap;
-use futures::{stream::FuturesUnordered, FutureExt, StreamExt};
+use futures_util::{stream::FuturesUnordered, FutureExt, StreamExt};
 use isahc::AsyncReadResponseExt;
 use serde::Deserialize;
 
