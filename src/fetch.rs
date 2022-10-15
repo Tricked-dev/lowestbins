@@ -1,11 +1,11 @@
 use crate::{
     bazaar::get as get_bazaar,
+    error::Result,
     nbt_utils::{Item, Pet},
     webhook::*,
     API_URL, AUCTIONS, CONFIG, HTTP_CLIENT,
 };
 
-use anyhow::{anyhow, Result};
 use dashmap::DashMap;
 use futures_util::{stream::FuturesUnordered, FutureExt, StreamExt};
 use isahc::AsyncReadResponseExt;
@@ -28,11 +28,9 @@ pub async fn get(page: i64) -> Result<HypixelResponse> {
             page,
             API_URL = *API_URL
         ))
-        .await
-        .map_err(|x| anyhow!(x))?
+        .await?
         .bytes()
-        .await
-        .unwrap();
+        .await?;
 
     #[cfg(feature = "simd")]
     return Ok(simd_json::from_slice(&mut text)?);
@@ -45,7 +43,7 @@ async fn get_auctions(page: i64, auctions: &DashMap<String, u64>) -> Result<()> 
     match res {
         Ok(res) => {
             let map = DashMap::new();
-            parse_hypixel(res.auctions, &map);
+            parse_hypixel(res.auctions, &map)?;
 
             for (x, y) in map.into_iter() {
                 if let Some(s) = auctions.get(&x) {
@@ -77,7 +75,7 @@ pub async fn fetch_auctions() -> Result<()> {
     let hs = get(0).await?;
 
     let auctions: DashMap<String, u64> = DashMap::new();
-    parse_hypixel(hs.auctions, &auctions);
+    parse_hypixel(hs.auctions, &auctions)?;
 
     let futures = FuturesUnordered::new();
     let n = Instant::now();
@@ -111,21 +109,21 @@ pub async fn fetch_auctions() -> Result<()> {
     ))
     .await?;
 
-    let mut auc = AUCTIONS.lock().unwrap();
+    let mut auc = AUCTIONS.lock().expect("Failed to lock auctions");
     auc.extend(new_auctions);
 
     Ok(())
 }
 
-pub fn parse_hypixel(auctions: Vec<Item>, map: &DashMap<String, u64>) {
+pub fn parse_hypixel(auctions: Vec<Item>, map: &DashMap<String, u64>) -> Result<()> {
     for auction in auctions.iter() {
         if auction.bin {
-            let nbt = &auction.to_nbt().unwrap().i[0];
+            let nbt = &auction.to_nbt()?.i[0];
             let mut id = nbt.tag.extra_attributes.id.clone();
             let count = nbt.count;
             match &nbt.tag.extra_attributes.pet {
                 Some(x) => {
-                    let v: Pet = serde_json::from_str(x).unwrap();
+                    let v: Pet = serde_json::from_str(x)?;
                     id = format!("PET-{}-{}", v.pet_type, v.tier);
                 }
                 None => {}
@@ -178,4 +176,5 @@ pub fn parse_hypixel(auctions: Vec<Item>, map: &DashMap<String, u64>) {
             map.insert(id, price);
         }
     }
+    Ok(())
 }

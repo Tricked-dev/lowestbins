@@ -1,6 +1,9 @@
 use nbt::from_gzip_reader;
 use serde::Deserialize;
+
 use std::{collections::HashMap, io, result::Result as StdResult};
+
+use crate::error::Result;
 
 #[derive(Deserialize)]
 pub struct PartialNbt {
@@ -65,7 +68,7 @@ fn bool_false() -> bool {
     false
 }
 impl Item {
-    pub fn to_nbt(&self) -> Result<PartialNbt, Box<dyn std::error::Error>> {
+    pub fn to_nbt(&self) -> Result<PartialNbt> {
         let bytes: StdResult<Vec<u8>, _> = self.bytes.clone().into();
         let nbt: PartialNbt = from_gzip_reader(io::Cursor::new(bytes?))?;
         Ok(nbt)
@@ -90,8 +93,8 @@ impl From<ItemBytes> for String {
         }
     }
 }
-impl From<ItemBytes> for Result<Vec<u8>, Box<dyn std::error::Error>> {
-    fn from(s: ItemBytes) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+impl From<ItemBytes> for Result<Vec<u8>> {
+    fn from(s: ItemBytes) -> Result<Vec<u8>> {
         let b64: String = s.into();
         Ok(base64::decode(&b64)?)
     }

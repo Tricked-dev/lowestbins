@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use anyhow::{anyhow, Result};
+use crate::error::Result;
 use isahc::AsyncReadResponseExt;
 use serde::Deserialize;
 
@@ -26,11 +26,9 @@ pub struct QuickStatus {
 pub async fn get() -> Result<BazaarResponse> {
     let mut text = HTTP_CLIENT
         .get_async(format!("{API_URL}/skyblock/bazaar", API_URL = *API_URL))
-        .await
-        .map_err(|x| anyhow!(x))?
+        .await?
         .bytes()
-        .await
-        .map_err(|x| anyhow!(x))?;
+        .await?;
 
     #[cfg(feature = "simd")]
     return Ok(simd_json::from_slice(&mut text)?);

@@ -1,5 +1,4 @@
-use crate::{CONFIG, HTTP_CLIENT};
-use anyhow::{anyhow, Result};
+use crate::{error::Result, CONFIG, HTTP_CLIENT};
 use isahc::{AsyncBody, Request};
 use serde::Serialize;
 
@@ -30,7 +29,7 @@ pub async fn send_embed(msg: Message) -> Result<()> {
             .uri(webhook)
             .header("Content-Type", "application/json")
             .body(AsyncBody::from(serde_json::to_string(&msg)?))?;
-        HTTP_CLIENT.send_async(req).await.map_err(|x| anyhow!(x))?;
+        HTTP_CLIENT.send_async(req).await?;
     }
 
     Ok(())

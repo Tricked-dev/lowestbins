@@ -2,6 +2,7 @@ use std::{env, fs, process};
 
 use futures_util::Future;
 use lowestbins::{
+    error::Result,
     fetch::{fetch_auctions, get},
     server::start_server,
     AUCTIONS, CONFIG,
@@ -12,7 +13,7 @@ static LOGO: &str = include_str!(concat!(env!("OUT_DIR"), "/logo.txt"));
 static SOURCE: &str = "https://github.com/Tricked-dev/lowestbins";
 
 #[tokio::main(flavor = "multi_thread")]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
     let now = time::Instant::now();
     get(1).await?;
