@@ -43,7 +43,7 @@ async fn main() -> Result<()> {
                 serde_json::to_string_pretty(&*AUCTIONS.lock().unwrap()).unwrap(),
             )
             .unwrap();
-            println!("");
+            println!();
             tracing::info!("Wrote save to disk\n");
             process::exit(0)
         })?;
