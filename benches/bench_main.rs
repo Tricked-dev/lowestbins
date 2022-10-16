@@ -47,7 +47,7 @@ fn parse_hypixel_auctions(c: &mut Criterion) {
         b.iter(|| {
             let auctions: DashMap<String, u64> = DashMap::new();
             for item in items.iter() {
-                parse_hypixel(item.auctions.clone(), &auctions);
+                parse_hypixel(item.auctions.clone(), &auctions).unwrap();
             }
         })
     });

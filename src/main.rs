@@ -17,7 +17,7 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
     let now = time::Instant::now();
     get(1).await?;
-    println!(
+    let res = format!(
         "{LOGO}\nLoaded {} auctions from save\nMade by Tricked-dev - source: {SOURCE}\nSpeed: {:?}\nOverwrites {:?}, Save To Disk: {}, Update Seconds: {}",
         AUCTIONS.lock().unwrap().len(),
         now.elapsed(),
@@ -25,11 +25,12 @@ async fn main() -> Result<()> {
         &CONFIG.save_to_disk,
         &CONFIG.update_seconds,
     );
+    res.lines().map(|s| tracing::info!("{}", s)).for_each(drop);
 
     set_interval(
         || async {
             if let Err(e) = fetch_auctions().await {
-                println!("Error occured while fetching auctions {e:?}")
+                tracing::error!("Error occured while fetching auctions {e:?}\n",)
             }
         },
         Duration::from_secs(CONFIG.update_seconds),
@@ -42,7 +43,8 @@ async fn main() -> Result<()> {
                 serde_json::to_string_pretty(&*AUCTIONS.lock().unwrap()).unwrap(),
             )
             .unwrap();
-            println!("\nWrote save to disk");
+            println!("");
+            tracing::info!("Wrote save to disk\n");
             process::exit(0)
         })?;
     }

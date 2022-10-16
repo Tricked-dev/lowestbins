@@ -24,6 +24,7 @@ pub struct QuickStatus {
     pub buy_price: f64,
 }
 pub async fn get() -> Result<BazaarResponse> {
+    #[allow(unused_mut)]
     let mut text = HTTP_CLIENT
         .get_async(format!("{API_URL}/skyblock/bazaar", API_URL = *API_URL))
         .await?

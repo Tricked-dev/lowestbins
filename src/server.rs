@@ -18,10 +18,10 @@ pub async fn start_server() -> Result<()> {
 
     let server = Server::bind(&addr).serve(make_service);
 
-    println!("Listening on http://{}", addr);
+    tracing::info!("Listening on http://{}", addr);
 
     if let Err(e) = server.await {
-        eprintln!("server error: {}", e);
+        tracing::error!("server error: {}", e);
     }
 
     Ok(())

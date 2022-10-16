@@ -22,6 +22,7 @@ pub struct HypixelResponse {
 }
 
 pub async fn get(page: i64) -> Result<HypixelResponse> {
+    #[allow(unused_mut)]
     let mut text = HTTP_CLIENT
         .get_async(&format!(
             "{API_URL}/skyblock/auctions?page={}",
