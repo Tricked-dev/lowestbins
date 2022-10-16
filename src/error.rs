@@ -5,10 +5,6 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum LowestbinsError {
-    #[error("{0}")]
-    NbtError(#[from] nbt::Error),
-    #[error("HTTP ERROR: {0}")]
-    HttpError(#[from] isahc::Error),
     #[error("HTTP DECODE ERROR: {0}")]
     HttpDecodeError(#[from] isahc::http::Error),
     #[error("Error while parsing JSON: {0}")]
@@ -16,8 +12,16 @@ pub enum LowestbinsError {
     #[cfg(feature = "simd")]
     #[error("Error while parsing JSON: {0}")]
     SimdJsonError(#[from] simd_json::Error),
+    #[error("HTTP ERROR: {0}")]
+    HttpError(#[from] isahc::Error),
+    #[error("{0}")]
+    NbtError(#[from] nbt::Error),
+    #[error("Decode Error")]
+    DecodeError,
     #[error("Misc Error")]
     MiscError,
+    #[error("IO Error")]
+    IoError,
 }
 
 impl From<ctrlc::Error> for LowestbinsError {
@@ -28,13 +32,13 @@ impl From<ctrlc::Error> for LowestbinsError {
 
 impl From<DecodeError> for LowestbinsError {
     fn from(_: DecodeError) -> Self {
-        LowestbinsError::MiscError
+        LowestbinsError::DecodeError
     }
 }
 
 impl From<io::Error> for LowestbinsError {
     fn from(_: io::Error) -> Self {
-        LowestbinsError::MiscError
+        LowestbinsError::IoError
     }
 }
 
