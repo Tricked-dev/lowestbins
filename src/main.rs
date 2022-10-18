@@ -7,34 +7,48 @@ use lowestbins::{
     server::start_server,
     AUCTIONS, CONFIG,
 };
-use tokio::{time, time::Duration};
+use tokio::{join, time, time::Duration};
 
 static LOGO: &str = include_str!(concat!(env!("OUT_DIR"), "/logo.txt"));
 static SOURCE: &str = "https://github.com/Tricked-dev/lowestbins";
 
-#[tokio::main(flavor = "multi_thread")]
-async fn main() -> Result<()> {
+pub fn create_basic_runtime() -> tokio::runtime::Runtime {
+    tokio::runtime::Builder::new_current_thread()
+        .enable_io()
+        .enable_time()
+        .max_blocking_threads(32)
+        .build()
+        .unwrap()
+}
+
+fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
-    let now = time::Instant::now();
-    get(1).await?;
     let res = format!(
-        "{LOGO}\nLoaded {} auctions from save\nMade by Tricked-dev - source: {SOURCE}\nSpeed: {:?}\nOverwrites {:?}, Save To Disk: {}, Update Seconds: {}",
+        "{LOGO}\nLoaded {} auctions from save\nMade by Tricked-dev - source: {SOURCE}\nOverwrites {:?}, Save To Disk: {}, Update Seconds: {}",
         AUCTIONS.lock().unwrap().len(),
-        now.elapsed(),
         &CONFIG.overwrites,
         &CONFIG.save_to_disk,
         &CONFIG.update_seconds,
     );
     res.lines().map(|s| tracing::info!("{}", s)).for_each(drop);
+    let rt = create_basic_runtime();
 
-    set_interval(
-        || async {
-            if let Err(e) = fetch_auctions().await {
-                tracing::error!("Error occured while fetching auctions {e:?}\n",)
-            }
-        },
-        Duration::from_secs(CONFIG.update_seconds),
-    );
+    rt.spawn(async {
+        let dur = Duration::from_secs(CONFIG.update_seconds);
+        let mut interval = time::interval(dur);
+        interval.tick().await;
+        loop {
+            // Dont spawn a thread but instead wait for both futures to finish and continue
+            join!(
+                async {
+                    if let Err(e) = fetch_auctions().await {
+                        tracing::error!("Error occured while fetching auctions {e:?}\n",)
+                    }
+                },
+                interval.tick()
+            );
+        }
+    });
 
     if CONFIG.save_to_disk {
         ctrlc::set_handler(move || {
@@ -48,21 +62,8 @@ async fn main() -> Result<()> {
             process::exit(0)
         })?;
     }
-
-    start_server().await?;
-    Ok(())
-}
-pub fn set_interval<F, Fut>(mut f: F, dur: Duration)
-where
-    F: Send + 'static + FnMut() -> Fut,
-    Fut: Future<Output = ()> + Send + 'static,
-{
-    let mut interval = time::interval(dur);
-    tokio::spawn(async move {
-        interval.tick().await;
-        loop {
-            tokio::spawn(f());
-            interval.tick().await;
-        }
+    rt.block_on(async {
+        start_server().await.unwrap();
     });
+    Ok(())
 }
