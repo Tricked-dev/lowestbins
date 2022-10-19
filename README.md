@@ -69,7 +69,7 @@ docker run  --name lowestbins -p 8080:8080 -e HOST=0.0.0.0 -e UPDATE_SECONDS=120
 ## Building
 
 - If you're on Linux, you can go to releases and download the binary
-- Windows/MacOS: you need to install cargo and run cargo build --release and the exe/binary should be in the target/release/ folder.
+- Windows/MacOS: you need to install cargo and run `cargo build --release` and the exe/binary should be in the `./target/release/lowestbins`.
 
 ## Config Options
 

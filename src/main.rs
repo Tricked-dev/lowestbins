@@ -1,13 +1,13 @@
 use std::{env, fs, process};
 
-use futures_util::Future;
+use futures_util::{future::join, Future};
 use lowestbins::{
     error::Result,
     fetch::{fetch_auctions, get},
     server::start_server,
     AUCTIONS, CONFIG,
 };
-use tokio::{join, time, time::Duration};
+use tokio::{time, time::Duration};
 
 static LOGO: &str = include_str!(concat!(env!("OUT_DIR"), "/logo.txt"));
 static SOURCE: &str = "https://github.com/Tricked-dev/lowestbins";
@@ -32,21 +32,21 @@ fn main() -> Result<()> {
     );
     res.lines().map(|s| tracing::info!("{}", s)).for_each(drop);
     let rt = create_basic_runtime();
-
     rt.spawn(async {
         let dur = Duration::from_secs(CONFIG.update_seconds);
         let mut interval = time::interval(dur);
         interval.tick().await;
         loop {
             // Dont spawn a thread but instead wait for both futures to finish and continue
-            join!(
+            join(
                 async {
                     if let Err(e) = fetch_auctions().await {
                         tracing::error!("Error occured while fetching auctions {e:?}\n",)
                     }
                 },
-                interval.tick()
-            );
+                interval.tick(),
+            )
+            .await;
         }
     });
 
