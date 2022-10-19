@@ -1,12 +1,7 @@
 use std::{env, fs, process};
 
-use futures_util::{future::join, Future};
-use lowestbins::{
-    error::Result,
-    fetch::{fetch_auctions, get},
-    server::start_server,
-    AUCTIONS, CONFIG,
-};
+use futures_util::future::join;
+use lowestbins::{error::Result, fetch::fetch_auctions, server::start_server, AUCTIONS, CONFIG};
 use tokio::{time, time::Duration};
 
 static LOGO: &str = include_str!(concat!(env!("OUT_DIR"), "/logo.txt"));
