@@ -49,7 +49,7 @@ hyper = { version = "0.14", features = [
     "http1",
     "http2",
 ] }
-isahc = { version = "1.7.2", features = [] }
+isahc = { version = "1.7.2", default-features = false, features = ["http2"] }
 # Misc
 ctrlc = "3.2"
 flate2 = "1"
