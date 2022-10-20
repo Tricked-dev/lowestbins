@@ -54,7 +54,7 @@ isahc = { version = "1.7.2", features = [] }
 ctrlc = "3.2"
 flate2 = "1"
 once_cell = "1"
-thiserror = "1.0.37"
+anyhow = { version = "1.0.65", features = ["backtrace"] }
 
 [build-dependencies]
 colored = "2.0"
