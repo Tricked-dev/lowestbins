@@ -19,7 +19,7 @@ const UA: &str = concat!(
 
 use std::{collections::HashMap, env, fs, sync::Mutex};
 
-use isahc::HttpClient;
+use isahc::{prelude::Configurable, HttpClient};
 use once_cell::sync::Lazy;
 
 const UPDATE_SECONDS: &str = "UPDATE_SECONDS";
@@ -75,8 +75,15 @@ impl Conf {
 pub static API_URL: Lazy<String> =
     Lazy::new(|| env::var(API_URL_ENV).unwrap_or_else(|_| "https://api.hypixel.net".to_owned()));
 pub static CONFIG: Lazy<Conf> = Lazy::new(Conf::init);
-pub static HTTP_CLIENT: Lazy<HttpClient> =
-    Lazy::new(|| HttpClient::builder().default_header("user-agent", UA).build().unwrap());
+pub static HTTP_CLIENT: Lazy<HttpClient> = Lazy::new(|| {
+    HttpClient::builder()
+        .default_header("user-agent", UA)
+        .max_connections_per_host(0)
+        .max_connections(0)
+        .tcp_nodelay()
+        .build()
+        .unwrap()
+});
 // Honestly there should be a better way to do this in a more memory efficient way i think?
 pub static AUCTIONS: Lazy<Mutex<HashMap<String, u64>>> = Lazy::new(|| {
     let defaults = include_bytes!(concat!(env!("OUT_DIR"), "/sellprices.json"));
