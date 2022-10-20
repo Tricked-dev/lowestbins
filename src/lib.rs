@@ -19,7 +19,7 @@ const UA: &str = concat!(
 
 use std::{collections::HashMap, env, fs, sync::Mutex};
 
-use isahc::{prelude::Configurable, HttpClient};
+use isahc::HttpClient;
 use once_cell::sync::Lazy;
 
 const UPDATE_SECONDS: &str = "UPDATE_SECONDS";
@@ -80,7 +80,6 @@ pub static HTTP_CLIENT: Lazy<HttpClient> = Lazy::new(|| {
         .default_header("user-agent", UA)
         .max_connections_per_host(0)
         .max_connections(0)
-        .tcp_nodelay()
         .build()
         .unwrap()
 });
