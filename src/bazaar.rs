@@ -1,10 +1,8 @@
 use std::collections::HashMap;
 
-use crate::error::Result;
-use isahc::AsyncReadResponseExt;
-use serde::Deserialize;
+use crate::{error::Result, get_path};
 
-use crate::{API_URL, HTTP_CLIENT};
+use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct BazaarResponse {
@@ -24,15 +22,5 @@ pub struct QuickStatus {
     pub buy_price: f64,
 }
 pub async fn get() -> Result<BazaarResponse> {
-    #[allow(unused_mut)]
-    let mut text = HTTP_CLIENT
-        .get_async(format!("{API_URL}/skyblock/bazaar", API_URL = *API_URL))
-        .await?
-        .bytes()
-        .await?;
-
-    #[cfg(feature = "simd")]
-    return Ok(simd_json::from_slice(&mut text)?);
-    #[cfg(not(feature = "simd"))]
-    return Ok(serde_json::from_slice(&text)?);
+    get_path("bazaar").await
 }

@@ -1,14 +1,14 @@
 use crate::{
     bazaar::get as get_bazaar,
     error::Result,
+    get_path,
     nbt_utils::{Item, Pet},
     webhook::*,
-    API_URL, AUCTIONS, CONFIG, HTTP_CLIENT,
+    AUCTIONS, CONFIG,
 };
 
 use dashmap::DashMap;
 use futures_util::{stream::FuturesUnordered, FutureExt, StreamExt};
-use isahc::AsyncReadResponseExt;
 use serde::Deserialize;
 
 use std::time::Instant;
@@ -22,21 +22,7 @@ pub struct HypixelResponse {
 }
 
 pub async fn get(page: i64) -> Result<HypixelResponse> {
-    #[allow(unused_mut)]
-    let mut text = HTTP_CLIENT
-        .get_async(&format!(
-            "{API_URL}/skyblock/auctions?page={}",
-            page,
-            API_URL = *API_URL
-        ))
-        .await?
-        .bytes()
-        .await?;
-
-    #[cfg(feature = "simd")]
-    return Ok(simd_json::from_slice(&mut text)?);
-    #[cfg(not(feature = "simd"))]
-    return Ok(serde_json::from_slice(&text)?);
+    get_path(&format!("auctions?page={page}")).await
 }
 
 async fn get_auctions(page: i64, auctions: &DashMap<String, u64>) -> Result<()> {

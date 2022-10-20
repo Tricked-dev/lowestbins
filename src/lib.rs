@@ -19,8 +19,9 @@ const UA: &str = concat!(
 
 use std::{collections::HashMap, env, fs, sync::Mutex};
 
-use isahc::{prelude::Configurable, HttpClient};
+use isahc::{config::DnsCache, prelude::Configurable, AsyncReadResponseExt, HttpClient};
 use once_cell::sync::Lazy;
+use serde::de::DeserializeOwned;
 
 const UPDATE_SECONDS: &str = "UPDATE_SECONDS";
 const SAVE_TO_DISK: &str = "SAVE_TO_DISK";
@@ -70,6 +71,19 @@ impl Conf {
     }
 }
 
+pub async fn get_path<T: DeserializeOwned>(path: &'_ str) -> error::Result<T> {
+    #[allow(unused_mut)]
+    let mut text = HTTP_CLIENT
+        .get_async(format!("{API_URL}/skyblock/{path}", API_URL = *API_URL))
+        .await?
+        .bytes()
+        .await?;
+
+    #[cfg(feature = "simd")]
+    return Ok(simd_json::from_slice(&mut text)?);
+    #[cfg(not(feature = "simd"))]
+    return Ok(serde_json::from_slice(&text)?);
+}
 // Using lazy it's considered better than lazy_static!
 
 pub static API_URL: Lazy<String> =
@@ -79,6 +93,8 @@ pub static HTTP_CLIENT: Lazy<HttpClient> = Lazy::new(|| {
     HttpClient::builder()
         .default_header("user-agent", UA)
         .max_connections_per_host(50)
+        .tcp_nodelay()
+        .dns_cache(DnsCache::Forever)
         .build()
         .unwrap()
 });
