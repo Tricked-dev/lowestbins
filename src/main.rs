@@ -7,16 +7,8 @@ use tokio::{time, time::Duration};
 static LOGO: &str = include_str!(concat!(env!("OUT_DIR"), "/logo.txt"));
 static SOURCE: &str = "https://github.com/Tricked-dev/lowestbins";
 
-pub fn create_basic_runtime() -> tokio::runtime::Runtime {
-    tokio::runtime::Builder::new_current_thread()
-        .enable_io()
-        .enable_time()
-        .max_blocking_threads(32)
-        .build()
-        .unwrap()
-}
-
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
     let res = format!(
         "{LOGO}\nLoaded {} auctions from save\nMade by Tricked-dev - source: {SOURCE}\nOverwrites {:?}, Save To Disk: {}, Update Seconds: {}",
@@ -26,8 +18,7 @@ fn main() -> Result<()> {
         &CONFIG.update_seconds,
     );
     res.lines().map(|s| tracing::info!("{}", s)).for_each(drop);
-    let rt = create_basic_runtime();
-    rt.spawn(async {
+    tokio::spawn(async {
         let dur = Duration::from_secs(CONFIG.update_seconds);
         let mut interval = time::interval(dur);
         interval.tick().await;
@@ -57,8 +48,6 @@ fn main() -> Result<()> {
             process::exit(0)
         })?;
     }
-    rt.block_on(async {
-        start_server().await.unwrap();
-    });
+    start_server().await.unwrap();
     Ok(())
 }
