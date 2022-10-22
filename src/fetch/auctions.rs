@@ -1,17 +1,13 @@
 use crate::{
-    bazaar::get as get_bazaar,
     error::Result,
-    get_path,
     nbt_utils::{Item, Pet},
     webhook::*,
-    AUCTIONS, CONFIG,
 };
 
 use dashmap::DashMap;
-use futures_util::{stream::FuturesUnordered, FutureExt, StreamExt};
 use serde::Deserialize;
 
-use std::time::Instant;
+use super::util::get_path;
 
 #[derive(Deserialize)]
 pub struct HypixelResponse {
@@ -21,88 +17,11 @@ pub struct HypixelResponse {
     pub auctions: Vec<Item>,
 }
 
-pub async fn get(page: i64) -> Result<HypixelResponse> {
+pub async fn get_auctions_page(page: i64) -> Result<HypixelResponse> {
     get_path(&format!("auctions?page={page}")).await
 }
 
-async fn get_auctions(page: i64, auctions: &DashMap<String, u64>) -> Result<()> {
-    let res = get(page).await;
-    match res {
-        Ok(res) => {
-            let map = DashMap::new();
-            parse_hypixel(res.auctions, &map)?;
-
-            for (x, y) in map.into_iter() {
-                if let Some(s) = auctions.get(&x) {
-                    if *s < y {
-                        continue;
-                    };
-                }
-                auctions.insert(x.to_owned(), y);
-            }
-        }
-        Err(e) => {
-            send_webhook_text(&format!("Error: {:?}", e)).await?;
-        }
-    };
-    Ok(())
-}
-
-pub async fn get_bazaar_products(auctions: &DashMap<String, u64>) -> Result<()> {
-    let bz = get_bazaar().await?;
-    let prods = bz.products;
-    for (key, val) in prods.iter() {
-        auctions.insert(key.to_owned(), val.quick_status.buy_price.round() as u64);
-    }
-    Ok(())
-}
-
-pub async fn fetch_auctions() -> Result<()> {
-    let start = std::time::Instant::now();
-    let hs = get(0).await?;
-
-    let auctions: DashMap<String, u64> = DashMap::new();
-    parse_hypixel(hs.auctions, &auctions)?;
-
-    let futures = FuturesUnordered::new();
-    let n = Instant::now();
-    for url in 1..hs.total_pages {
-        futures.push(get_auctions(url, &auctions).boxed());
-    }
-    futures.push(get_bazaar_products(&auctions).boxed());
-
-    let _: Vec<_> = futures.collect().await;
-    let fetched = auctions.len();
-    let fetch_time = n.elapsed();
-
-    let mut new_auctions = DashMap::new();
-    new_auctions.extend(auctions.clone());
-    drop(auctions);
-    new_auctions.extend(CONFIG.overwrites.clone());
-
-    tracing::debug!("Fetched {} auctions in {:?}", fetched, fetch_time);
-    // It only sends if the WEBHOOK_URL env var is set
-    send_embed(Message::new(
-        "Auctions updated".to_owned(),
-        vec![Embed::new(
-            "Auctions updated".to_owned(),
-            format!(
-                "Fetched: {}\nFetch Time: {:?}\nTime: {:?}",
-                fetched,
-                fetch_time,
-                start.elapsed()
-            ),
-        )],
-    ))
-    .await?;
-
-    let mut auc = AUCTIONS.lock().expect("Failed to lock auctions");
-    auc.extend(new_auctions);
-
-    Ok(())
-}
-
-pub fn parse_hypixel(auctions: Vec<Item>, map: &DashMap<String, u64>) -> Result<()> {
+pub fn parse_auctions(auctions: Vec<Item>, map: &DashMap<String, u64>) -> Result<()> {
     for auction in auctions.iter() {
         if auction.bin {
             let nbt = &auction.to_nbt()?.i[0];
@@ -163,5 +82,28 @@ pub fn parse_hypixel(auctions: Vec<Item>, map: &DashMap<String, u64>) -> Result<
             map.insert(id, price);
         }
     }
+    Ok(())
+}
+
+pub async fn get_auctions(page: i64, auctions: &DashMap<String, u64>) -> Result<()> {
+    let res = get_auctions_page(page).await;
+    match res {
+        Ok(res) => {
+            let map = DashMap::new();
+            parse_auctions(res.auctions, &map)?;
+
+            for (x, y) in map.into_iter() {
+                if let Some(s) = auctions.get(&x) {
+                    if *s < y {
+                        continue;
+                    };
+                }
+                auctions.insert(x.to_owned(), y);
+            }
+        }
+        Err(e) => {
+            send_webhook_text(&format!("Error: {:?}", e)).await?;
+        }
+    };
     Ok(())
 }

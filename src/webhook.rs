@@ -6,6 +6,7 @@ use serde::Serialize;
 pub struct Embed {
     title: String,
     description: String,
+    color: i32,
 }
 #[derive(Serialize, Debug)]
 pub struct Message {
@@ -19,7 +20,11 @@ impl Message {
 }
 impl Embed {
     pub fn new(title: String, description: String) -> Self {
-        Self { title, description }
+        Self {
+            title,
+            description,
+            color: 1377743,
+        }
     }
 }
 pub async fn send_embed(msg: Message) -> Result<()> {

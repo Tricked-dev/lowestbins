@@ -4,7 +4,7 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use dashmap::DashMap;
 
 use lowestbins::{
-    fetch::{parse_hypixel, HypixelResponse},
+    fetch::auctions::{parse_auctions, HypixelResponse},
     nbt_utils::Item,
 };
 
@@ -48,7 +48,7 @@ fn parse_hypixel_auctions(c: &mut Criterion) {
             let items = black_box(&items);
             let auctions: DashMap<String, u64> = DashMap::new();
             for item in items.iter() {
-                parse_hypixel(item.auctions.clone(), &auctions).unwrap();
+                parse_auctions(item.auctions.clone(), &auctions).unwrap();
             }
         })
     });
