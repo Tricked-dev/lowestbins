@@ -9,3 +9,4 @@ memory-profiling_*.dat
 auctions.json
 .env
 bench-lb/pages
+./neudata

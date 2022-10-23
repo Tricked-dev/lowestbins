@@ -1,9 +1,12 @@
+use std::collections::BTreeMap;
+
 use hyper::{
     header,
     http::response,
     service::{make_service_fn, service_fn},
     Body, Method, Request, Response, Server,
 };
+use once_cell::sync::Lazy;
 use serde_json::json;
 
 use crate::{error::Result, AUCTIONS, CONFIG};
@@ -46,9 +49,17 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
             Ok(response_base().body(Body::from(bytes))?)
         }
         (&Method::GET, "/metrics") => {
-            let mut res = "# HELP price Price of each item\n# TYPE price gauge\n".to_owned();
+            static DISPLAY_NAMES: Lazy<BTreeMap<String, String>> = Lazy::new(|| {
+                let bytes = include_bytes!("../resources/display-names.bin");
+                rmp_serde::from_slice(bytes).unwrap()
+            });
+            let mut res = "# HELP price Price of each item\n# TYPE price gauge".to_owned();
             for (item, price) in &*AUCTIONS.lock().unwrap() {
-                res.push_str(&format!("\nprice{{item=\"{}\"}} {}", item, price));
+                let display_name = DISPLAY_NAMES.get(item).unwrap_or(item);
+                res.push_str(&format!(
+                    "\nlowestbin_price{{item=\"{}\", display=\"{}\"}} {}",
+                    item, display_name, price,
+                ));
             }
 
             Ok(response_base().body(Body::from(res)).unwrap())

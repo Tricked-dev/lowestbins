@@ -89,11 +89,11 @@ pub static HTTP_CLIENT: Lazy<HttpClient> = Lazy::new(|| {
 });
 // Honestly there should be a better way to do this in a more memory efficient way i think?
 pub static AUCTIONS: Lazy<Mutex<BTreeMap<String, u64>>> = Lazy::new(|| {
-    let defaults = include_bytes!(concat!(env!("OUT_DIR"), "/sellprices.json"));
     let mut res: BTreeMap<String, u64> = fs::read("auctions.json")
         .map(|x| serde_json::from_slice(&x).unwrap())
         .unwrap_or_default();
-    let map = serde_json::from_slice::<BTreeMap<String, f64>>(defaults).unwrap();
-    res.extend(map.into_iter().map(|(k, v)| (k, v.round() as u64)));
+    let defaults = include_bytes!(concat!(env!("OUT_DIR"), "/sellprices.bin"));
+    let map = rmp_serde::from_slice::<BTreeMap<String, u64>>(defaults).unwrap();
+    res.extend(map);
     Mutex::new(res)
 });

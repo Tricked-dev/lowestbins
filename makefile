@@ -1,6 +1,7 @@
 start:
 	cargo build --release; ./target/release/lowestbins
-buildb:
-	cd bench-lb && cargo build --release
-
+test:
+	cargo test --test test_data
+bench:
+	cargo bench
 	

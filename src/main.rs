@@ -38,11 +38,16 @@ async fn main() -> Result<()> {
 
     if CONFIG.save_to_disk {
         ctrlc::set_handler(move || {
-            fs::write(
-                "auctions.json",
-                serde_json::to_string_pretty(&*AUCTIONS.lock().unwrap()).unwrap(),
-            )
-            .unwrap();
+            if !AUCTIONS.is_poisoned() {
+                fs::write(
+                    "auctions.json",
+                    serde_json::to_string_pretty(&*AUCTIONS.lock().unwrap()).unwrap(),
+                )
+                .unwrap();
+            } else {
+                tracing::error!("Auctions poisoned, not saving to disk");
+            }
+
             println!();
             tracing::info!("Wrote save to disk\n");
             process::exit(0)
