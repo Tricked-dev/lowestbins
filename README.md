@@ -90,6 +90,7 @@ RUST_LOG # The log level lowestbins=debug recommended
 - NBT parsing
 - Fetching auctions and returning the lowest bin
 - hyper server
-- \+prob more things
+- Metrics endpoint `/metrics`
+- Rust
 
 > Licensed under the [Apache 2](./LICENSE) License
