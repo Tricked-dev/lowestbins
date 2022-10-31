@@ -15,7 +15,7 @@ struct Item {
 fn main() {
     if !std::path::Path::new("./neudata").exists() {
         std::process::Command::new("git")
-            .args(&[
+            .args([
                 "clone",
                 "https://github.com/NotEnoughUpdates/NotEnoughUpdates-REPO",
                 "neudata",
@@ -24,7 +24,7 @@ fn main() {
             .unwrap();
     } else {
         std::process::Command::new("git")
-            .args(&["pull"])
+            .args(["pull"])
             .current_dir("./neudata")
             .output()
             .unwrap();
@@ -34,7 +34,7 @@ fn main() {
     let mut data = HashMap::new();
     for file in fs::read_dir("./neudata/items").unwrap() {
         let file = file.unwrap();
-        if file.file_type().unwrap().is_file() && file.path().extension().unwrap() == "json" {
+        if !file.file_type().unwrap().is_dir() && file.path().extension().unwrap() == "json" {
             let file = fs::read(file.path()).unwrap();
             let file: Item = serde_json::from_slice(&file).unwrap();
             let displayname = re.replace_all(&file.displayname, "").to_string();
