@@ -70,13 +70,10 @@ pub fn parse_auctions(auctions: Vec<Item>, map: &DashMap<String, u64>) -> Result
                     }
                     None => {}
                 },
-                x if x.starts_with("ENCHANTMENT") => {
-                    let enchantment = id.split('_').nth(1).unwrap();
-                    let level = id.split('_').nth(2).unwrap();
-                    id = format!("ENCHANTED_BOOK-{}-{}", enchantment, level);
-                }
+
                 _ => {}
             }
+
             let r = map.get(&id);
             let price = auction.starting_bid / count as u64;
             if let Some(x) = r {

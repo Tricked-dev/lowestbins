@@ -31,8 +31,14 @@ pub async fn get_bazaar() -> Result<BazaarResponse> {
 pub async fn get_bazaar_products(auctions: &DashMap<String, u64>) -> Result<()> {
     let bz = get_bazaar().await?;
     let prods = bz.products;
-    for (key, val) in prods.iter() {
-        auctions.insert(key.to_owned(), val.quick_status.buy_price.round() as u64);
+    for (mut key, val) in prods.into_iter() {
+        if key.starts_with("ENCHANTMENT") {
+            key = format!(
+                "ENCHANTED_BOOK-{}",
+                key.split('_').skip(1).collect::<Vec<&str>>().join("-")
+            );
+        }
+        auctions.insert(key, val.quick_status.buy_price.round() as u64);
     }
     Ok(())
 }
