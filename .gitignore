@@ -10,3 +10,4 @@ auctions.json
 .env
 bench-lb/pages
 ./neudata
+neudata
