@@ -33,10 +33,20 @@ pub async fn get_bazaar_products(auctions: &DashMap<String, u64>) -> Result<()> 
     let prods = bz.products;
     for (mut key, val) in prods.into_iter() {
         if key.starts_with("ENCHANTMENT") {
-            key = format!(
-                "ENCHANTED_BOOK-{}",
-                key.split('_').skip(1).collect::<Vec<&str>>().join("-")
-            );
+            let mut split = key.split('_').skip(1);
+            let name = split.next().unwrap();
+            key = match (split.next(), split.next(), split.next()) {
+                (Some(extra), Some(extra2), Some(level)) => {
+                    format!("ENCHANTED_BOOK-{name}_{extra}_{extra2}-{level}",)
+                }
+                (Some(extra), Some(level), None) => {
+                    format!("ENCHANTED_BOOK-{name}_{extra}-{level}",)
+                }
+                (Some(level), None, None) => {
+                    format!("ENCHANTED_BOOK-{name}-{level}",)
+                }
+                _ => format!("ENCHANTED_BOOK-{name}"),
+            };
         }
         auctions.insert(key, val.quick_status.buy_price.round() as u64);
     }
