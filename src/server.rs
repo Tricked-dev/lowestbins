@@ -9,7 +9,7 @@ use hyper::{
 use once_cell::sync::Lazy;
 use serde_json::json;
 
-use crate::{error::Result, AUCTIONS, CONFIG};
+use crate::{error::Result, AUCTIONS, CONFIG, SOURCE, SPONSOR};
 // add a json not found response
 static NOTFOUND: &[u8] = b"{\"error\": \"not found\"}";
 
@@ -39,7 +39,7 @@ fn response_base() -> response::Builder {
         .header(header::ACCESS_CONTROL_ALLOW_HEADERS, "*")
         .header(header::CACHE_CONTROL, "max-age=60, s-maxage=60")
         .header(header::ACCESS_CONTROL_MAX_AGE, "86400")
-        .header("funding", "https://github.com/sponsors/Tricked-dev")
+        .header("funding", SPONSOR)
 }
 
 async fn response(req: Request<Body>) -> Result<Response<Body>> {
@@ -67,7 +67,8 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
         (_, "/") => Ok(response_base().body(Body::from(serde_json::to_vec_pretty(&json!({
             "message": "Welcome to the lowestbins API",
             "endpoint": "/lowestbins",
-            "funding": "https://github.com/sponsors/Tricked-dev"
+            "funding": SPONSOR,
+            "source": SOURCE
         }))?))?),
 
         _ => Ok(not_found()),

@@ -15,6 +15,8 @@ const UA: &str = concat!(
     env!("CARGO_PKG_REPOSITORY"),
     ")"
 );
+pub const SOURCE: &str = "https://github.com/Tricked-dev/lowestbins";
+pub const SPONSOR: &str = "https://github.com/sponsors/Tricked-dev";
 
 use std::{
     collections::{BTreeMap, HashMap},

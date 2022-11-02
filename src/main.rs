@@ -1,11 +1,13 @@
 use std::{env, fs, process};
 
 use futures_util::future::join;
-use lowestbins::{error::Result, fetch::fetch_auctions, server::start_server, AUCTIONS, CONFIG};
+use lowestbins::{error::Result, fetch::fetch_auctions, server::start_server, AUCTIONS, CONFIG, SOURCE};
+use mimalloc::MiMalloc;
 use tokio::{time, time::Duration};
 
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 static LOGO: &str = include_str!(concat!(env!("OUT_DIR"), "/logo.txt"));
-static SOURCE: &str = "https://github.com/Tricked-dev/lowestbins";
 
 pub fn create_basic_runtime() -> tokio::runtime::Runtime {
     tokio::runtime::Builder::new_current_thread()
