@@ -9,7 +9,7 @@ use hyper::{
 use once_cell::sync::Lazy;
 use serde_json::json;
 
-use crate::{error::Result, AUCTIONS, CONFIG, SOURCE, SPONSOR};
+use crate::{calc_next_update, error::Result, AUCTIONS, CONFIG, SOURCE, SPONSOR};
 // add a json not found response
 static NOTFOUND: &[u8] = b"{\"error\": \"not found\"}";
 
@@ -32,12 +32,13 @@ pub async fn start_server() -> Result<()> {
 }
 
 fn response_base() -> response::Builder {
+    let update = calc_next_update();
     Response::builder()
         .header(header::CONTENT_TYPE, "application/json")
         .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
         .header(header::ACCESS_CONTROL_ALLOW_METHODS, "GET, OPTIONS")
         .header(header::ACCESS_CONTROL_ALLOW_HEADERS, "*")
-        .header(header::CACHE_CONTROL, "max-age=60, s-maxage=60")
+        .header(header::CACHE_CONTROL, format!("max-age={update}, s-maxage={update}"))
         .header(header::ACCESS_CONTROL_MAX_AGE, "86400")
         .header("funding", SPONSOR)
 }
@@ -47,6 +48,18 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
         (&Method::GET, "/lowestbins.json") | (&Method::GET, "/lowestbins") | (&Method::GET, "/auctions/lowestbins") => {
             let bytes = serde_json::to_vec(&*AUCTIONS.lock().unwrap())?;
             Ok(response_base().body(Body::from(bytes))?)
+        }
+        (&Method::GET, route) if route.starts_with("/auction/") => {
+            let id = route.trim_start_matches("/auction/");
+            let auctions = AUCTIONS.lock().unwrap();
+            let value = auctions.get(id);
+
+            if let Some(auction) = value {
+                let bytes = serde_json::to_vec(&auction)?;
+                Ok(response_base().body(Body::from(bytes))?)
+            } else {
+                Ok(not_found())
+            }
         }
         (&Method::GET, "/metrics") => {
             static DISPLAY_NAMES: Lazy<BTreeMap<String, String>> = Lazy::new(|| {
@@ -64,12 +77,15 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
 
             Ok(response_base().body(Body::from(res)).unwrap())
         }
-        (_, "/") => Ok(response_base().body(Body::from(serde_json::to_vec_pretty(&json!({
-            "message": "Welcome to the lowestbins API",
-            "endpoint": "/lowestbins",
-            "funding": SPONSOR,
-            "source": SOURCE
-        }))?))?),
+        (_, "/") => Ok(response_base()
+            .header(header::CACHE_CONTROL, "max-age=2, s-maxage=2")
+            .body(Body::from(serde_json::to_vec_pretty(&json!({
+                "message": "Welcome to the lowestbins API",
+                "endpoint": "/lowestbins",
+                "updates_in": calc_next_update(),
+                "funding": SPONSOR,
+                "source": SOURCE
+            }))?))?),
 
         _ => Ok(not_found()),
     }

@@ -4,8 +4,9 @@ use crate::{
         auctions::{get_auctions, get_auctions_page, parse_auctions},
         bazaar::get_bazaar_products,
     },
+    set_last_updates,
     webhook::*,
-    AUCTIONS, CONFIG,
+    AUCTIONS, CONFIG, LAST_UPDATED,
 };
 
 use dashmap::DashMap;
@@ -58,6 +59,6 @@ pub async fn fetch_auctions() -> Result<()> {
 
     let mut auc = AUCTIONS.lock().expect("Failed to lock auctions");
     auc.extend(new_auctions);
-
+    set_last_updates();
     Ok(())
 }

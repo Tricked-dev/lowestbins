@@ -90,7 +90,12 @@ RUST_LOG # The log level lowestbins=debug recommended
 - NBT parsing
 - Fetching auctions and returning the lowest bin
 - hyper server
-- Metrics endpoint `/metrics`
-- Rust
+- metrics endpoint `/metrics`
+- rust
+
+## Todo
+
+- use quiche for faster quests
+- use cargo pgo to optimize binaries
 
 > Licensed under the [Apache 2](./LICENSE) License
