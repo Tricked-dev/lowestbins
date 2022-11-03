@@ -49,8 +49,15 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
             let bytes = serde_json::to_vec(&*AUCTIONS.lock().unwrap())?;
             Ok(response_base().body(Body::from(bytes))?)
         }
-        (&Method::GET, route) if route.starts_with("/auction/") => {
-            let id = route.trim_start_matches("/auction/");
+        (&Method::GET, "/lowestbins.txt") => {
+            let mut res = String::new();
+            for (key, value) in &*AUCTIONS.lock().unwrap() {
+                res.push_str(&format!("{key} {value}\n"));
+            }
+            Ok(response_base().body(Body::from(res))?)
+        }
+        (&Method::GET, route) if route.starts_with("/auction/") || route.starts_with("/lowestbin/") => {
+            let id = route.trim_start_matches("/auction/").trim_start_matches("/lowestbin/");
             let auctions = AUCTIONS.lock().unwrap();
             let value = auctions.get(id);
 

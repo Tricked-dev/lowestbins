@@ -26,8 +26,7 @@ use std::{
 };
 
 use isahc::{config::DnsCache, prelude::Configurable, HttpClient};
-use once_cell::sync::{Lazy, OnceCell};
-use tracing::info;
+use once_cell::sync::Lazy;
 
 const UPDATE_SECONDS: &str = "UPDATE_SECONDS";
 const SAVE_TO_DISK: &str = "SAVE_TO_DISK";

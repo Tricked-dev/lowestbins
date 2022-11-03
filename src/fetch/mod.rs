@@ -6,7 +6,7 @@ use crate::{
     },
     set_last_updates,
     webhook::*,
-    AUCTIONS, CONFIG, LAST_UPDATED,
+    AUCTIONS, CONFIG,
 };
 
 use dashmap::DashMap;

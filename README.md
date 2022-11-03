@@ -18,7 +18,8 @@
 
 </div>
 
-A fast and effecient lowestbins implementation this uses parrallel requests to fetch all lowestbins in less than **2.5 SECONDS** and uses the hyper server allowing for practically unlimited requests per second while only using 50mb of ram!
+A fast and effecient lowestbins implementation this uses parrallel requests to fetch all lowestbins in less than **2.5 SECONDS** and uses the hyper server allowing for practically unlimited requests per second while only using 50mb of ram!  
+Lowestbins-rs is used by [Skytils](https://github.com/Skytils/SkytilsMod) for the lowestbins feature.
 
 ## Hosted Instance
 
@@ -58,6 +59,28 @@ json = requests.get("https://lb.tricked.pro/lowestbins").json()
 print(json["ENCHANTMENT_ULTIMATE_SWARM_2"])
 ```
 
+### Api endpoints
+
+#### `/lowestbins` | `/lowestbins.json` | `/auctions/lowestbins`
+
+> Returns a json object with all lowestbins
+
+#### `/lowestbins.txt`
+
+> Returns a text file with all lowestbins easier to parse and smaller in size
+
+#### `/auction/{item}` | `lowestbin/{item}`
+
+> Returns the price of a item as number this endpoint can be used to get more up to date prices due to it not being cached as often
+
+#### `/metrics`
+
+> Returns prometheus metrics of the prices
+
+#### `/`
+
+> Returns basic data about the api and update time
+
 ## Usage
 
 ### Docker
@@ -90,6 +113,7 @@ RUST_LOG # The log level lowestbins=debug recommended
 - NBT parsing
 - Fetching auctions and returning the lowest bin
 - hyper server
+- skytils compatible
 - metrics endpoint `/metrics`
 - rust
 
