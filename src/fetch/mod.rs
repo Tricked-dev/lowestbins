@@ -57,7 +57,7 @@ pub async fn fetch_auctions() -> Result<()> {
     ))
     .await?;
 
-    let mut auc = AUCTIONS.lock().expect("Failed to lock auctions");
+    let mut auc = AUCTIONS.lock();
     auc.extend(new_auctions);
     set_last_updates();
     Ok(())

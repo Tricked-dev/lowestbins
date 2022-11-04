@@ -24,7 +24,7 @@ fn main() -> Result<()> {
 
     let res = format!(
         "{LOGO}\nLoaded {} auctions from save\nMade by Tricked-dev - source: {SOURCE}\nOverwrites {:?}, Save To Disk: {}, Update Seconds: {}",
-        AUCTIONS.lock().unwrap().len(),
+        AUCTIONS.lock().len(),
         &CONFIG.overwrites,
         &CONFIG.save_to_disk,
         &CONFIG.update_seconds,
@@ -33,10 +33,10 @@ fn main() -> Result<()> {
 
     if CONFIG.save_to_disk {
         ctrlc::set_handler(move || {
-            if !AUCTIONS.is_poisoned() {
+            if !AUCTIONS.is_locked() {
                 fs::write(
                     "auctions.json",
-                    serde_json::to_string_pretty(&*AUCTIONS.lock().unwrap()).unwrap(),
+                    serde_json::to_string_pretty(&*AUCTIONS.lock()).unwrap(),
                 )
                 .unwrap();
             } else {

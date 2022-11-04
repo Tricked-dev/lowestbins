@@ -21,12 +21,12 @@ pub const SPONSOR: &str = "https://github.com/sponsors/Tricked-dev";
 use std::{
     collections::{BTreeMap, HashMap},
     env, fs,
-    sync::Mutex,
     time::Instant,
 };
 
 use isahc::{config::DnsCache, prelude::Configurable, HttpClient};
 use once_cell::sync::Lazy;
+use parking_lot::Mutex;
 
 const UPDATE_SECONDS: &str = "UPDATE_SECONDS";
 const SAVE_TO_DISK: &str = "SAVE_TO_DISK";
@@ -93,19 +93,15 @@ pub static HTTP_CLIENT: Lazy<HttpClient> = Lazy::new(|| {
 pub static LAST_UPDATED: Lazy<Mutex<Instant>> = Lazy::new(|| Mutex::new(Instant::now()));
 
 pub fn set_last_updates() {
-    *LAST_UPDATED.lock().unwrap() = Instant::now();
+    *LAST_UPDATED.lock() = Instant::now();
 }
 pub fn calc_next_update() -> u64 {
     let last_updated = LAST_UPDATED.lock();
-    if let Ok(last_updated) = last_updated {
-        let elapsed = last_updated.elapsed().as_secs();
-        if elapsed > CONFIG.update_seconds {
-            0
-        } else {
-            CONFIG.update_seconds - elapsed
-        }
-    } else {
+    let elapsed = last_updated.elapsed().as_secs();
+    if elapsed > CONFIG.update_seconds {
         0
+    } else {
+        CONFIG.update_seconds - elapsed
     }
 }
 // Honestly there should be a better way to do this in a more memory efficient way i think?

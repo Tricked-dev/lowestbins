@@ -46,19 +46,19 @@ fn response_base() -> response::Builder {
 async fn response(req: Request<Body>) -> Result<Response<Body>> {
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/lowestbins.json") | (&Method::GET, "/lowestbins") | (&Method::GET, "/auctions/lowestbins") => {
-            let bytes = serde_json::to_vec(&*AUCTIONS.lock().unwrap())?;
+            let bytes = serde_json::to_vec(&*AUCTIONS.lock())?;
             Ok(response_base().body(Body::from(bytes))?)
         }
         (&Method::GET, "/lowestbins.txt") => {
             let mut res = String::new();
-            for (key, value) in &*AUCTIONS.lock().unwrap() {
+            for (key, value) in &*AUCTIONS.lock() {
                 res.push_str(&format!("{key} {value}\n"));
             }
             Ok(response_base().body(Body::from(res))?)
         }
         (&Method::GET, route) if route.starts_with("/auction/") || route.starts_with("/lowestbin/") => {
             let id = route.trim_start_matches("/auction/").trim_start_matches("/lowestbin/");
-            let auctions = AUCTIONS.lock().unwrap();
+            let auctions = AUCTIONS.lock();
             let value = auctions.get(id);
 
             if let Some(auction) = value {
@@ -74,7 +74,7 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
                 rmp_serde::from_slice(bytes).unwrap()
             });
             let mut res = "# HELP price Price of each item\n# TYPE price gauge".to_owned();
-            for (item, price) in &*AUCTIONS.lock().unwrap() {
+            for (item, price) in &*AUCTIONS.lock() {
                 let display_name = DISPLAY_NAMES.get(item).unwrap_or(item);
                 res.push_str(&format!(
                     "\nlowestbin_price{{item=\"{}\", display=\"{}\"}} {}",
