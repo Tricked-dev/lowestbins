@@ -26,7 +26,7 @@ panic = 'abort'
 opt-level = 3
 
 [features]
-default = ["simd"]
+default = []
 simd = ["simd-json"]
 
 [[bin]]
