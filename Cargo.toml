@@ -19,7 +19,7 @@ lto = true
 strip = true
 codegen-units = 1
 incremental = true
-opt-level = 'z'
+opt-level = 's'
 panic = 'abort'
 
 [profile.release.package."*"]
