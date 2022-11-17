@@ -95,6 +95,20 @@ pub static LAST_UPDATED: Lazy<Mutex<Instant>> = Lazy::new(|| Mutex::new(Instant:
 pub fn set_last_updates() {
     *LAST_UPDATED.lock() = Instant::now();
 }
+
+pub fn round_to_nearest_15(value: u64) -> u64 {
+    let remainder = value % 15;
+    if value < 15 {
+        15
+    } else if remainder == 0 {
+        value
+    } else if remainder < 8 {
+        value - remainder
+    } else {
+        value + (15 - remainder)
+    }
+}
+
 pub fn calc_next_update() -> u64 {
     let last_updated = LAST_UPDATED.lock();
     let elapsed = last_updated.elapsed().as_secs();

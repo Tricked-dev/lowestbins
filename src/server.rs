@@ -9,7 +9,7 @@ use hyper::{
 use once_cell::sync::Lazy;
 use serde_json::json;
 
-use crate::{calc_next_update, error::Result, AUCTIONS, CONFIG, SOURCE, SPONSOR};
+use crate::{calc_next_update, error::Result, round_to_nearest_15, AUCTIONS, CONFIG, SOURCE, SPONSOR};
 // add a json not found response
 static NOTFOUND: &[u8] = b"{\"error\": \"not found\"}";
 
@@ -32,7 +32,7 @@ pub async fn start_server() -> Result<()> {
 }
 
 fn response_base() -> response::Builder {
-    let update = calc_next_update();
+    let update = round_to_nearest_15(calc_next_update());
     Response::builder()
         .header(header::CONTENT_TYPE, "application/json")
         .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
