@@ -24,6 +24,7 @@ Lowestbins-rs is used by [Skytils](https://github.com/Skytils/SkytilsMod) for th
 ## Hosted Instance
 
 - [lb.tricked.pro/](https://lb.tricked.pro/)
+- [lb2.tricked.pro/](https://lb2.tricked.pro/) (alternative host)
 
 If you are using this in a project please credit me! or sponsor me on github [github.com/sponsors/Tricked-dev](https://github.com/sponsors/Tricked-dev)
 
