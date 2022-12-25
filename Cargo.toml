@@ -35,7 +35,7 @@ path = "./update_display_names.rs"
 
 [dependencies]
 # Async
-futures-util = "0.3.24"
+futures-util = "0.3"
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros"] }
 # Serde
 serde = { version = "1", features = ["derive", "unstable"] }
@@ -47,7 +47,7 @@ base64 = "0.13"
 rmp-serde = "1"
 # Tracing
 tracing = { version = "0", features = [] }
-tracing-subscriber = { version = "0.3.15", features = [
+tracing-subscriber = { version = "0.3", features = [
     "once_cell",
     "parking_lot",
     "serde",
@@ -62,7 +62,7 @@ hyper = { version = "0.14", features = [
     "http2",
     "nightly"
 ] }
-isahc = { version = "1.7.2", default-features = false, features = [
+isahc = { version = "1", default-features = false, features = [
     "http2",
     "parking_lot",
     "nightly",
@@ -70,17 +70,13 @@ isahc = { version = "1.7.2", default-features = false, features = [
     "static-ssl"
 ] }
 # Misc
-ctrlc = "3.2"
+ctrlc = "3"
 flate2 = "1"
 once_cell = { version = "1", features = ["parking_lot"] }
-anyhow = { version = "1.0.65", features = ["backtrace"] }
+anyhow = { version = "1", features = ["backtrace"] }
 regex = { version = "1.6.0", features = ["unstable", "use_std"] }
 mimalloc = { version = "0", default-features = false }
-parking_lot = { version = "0.12.1", features = [
-    "serde",
-    "arc_lock",
-    "nightly"
-] }
+parking_lot = { version = "0.12", features = ["serde", "arc_lock", "nightly"] }
 
 [build-dependencies]
 colored = "2.0"
