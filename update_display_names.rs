@@ -1,15 +1,27 @@
 extern crate rmp_serde as rmps;
 
-use std::{collections::HashMap, fs};
-
-use regex::Regex;
 use rmps::Serializer;
 use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, fs};
 
 #[derive(Deserialize)]
 struct Item {
     internalname: String,
     displayname: String,
+}
+
+fn remove_color_codes(input_str: &str) -> String {
+    let mut result = String::new();
+    let mut chars = input_str.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c == '§' {
+            // skip the color code
+            let _ = chars.next();
+            continue;
+        }
+        result.push(c);
+    }
+    result
 }
 
 fn main() {
@@ -30,14 +42,13 @@ fn main() {
             .unwrap();
     }
 
-    let re = Regex::new(r"§.").unwrap();
     let mut data = HashMap::new();
     for file in fs::read_dir("./neudata/items").unwrap() {
         let file = file.unwrap();
         if !file.file_type().unwrap().is_dir() && file.path().extension().unwrap() == "json" {
             let file = fs::read(file.path()).unwrap();
             let file: Item = serde_json::from_slice(&file).unwrap();
-            let displayname = re.replace_all(&file.displayname, "").to_string();
+            let displayname = remove_color_codes(&file.displayname);
             data.insert(file.internalname, displayname);
         }
     }

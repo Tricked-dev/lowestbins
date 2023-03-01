@@ -74,7 +74,6 @@ ctrlc = "3"
 flate2 = "1"
 once_cell = { version = "1", features = ["parking_lot"] }
 anyhow = { version = "1", features = ["backtrace"] }
-regex = { version = "1.6.0", features = ["unstable", "use_std"] }
 mimalloc = { version = "0", default-features = false }
 parking_lot = { version = "0.12", features = ["serde", "arc_lock", "nightly"] }
 

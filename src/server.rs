@@ -77,8 +77,7 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
             for (item, price) in &*AUCTIONS.lock() {
                 let display_name = DISPLAY_NAMES.get(item).unwrap_or(item);
                 res.push_str(&format!(
-                    "\nlowestbin_price{{item=\"{}\", display=\"{}\"}} {}",
-                    item, display_name, price,
+                    "\nlowestbin_price{{item=\"{item}\", display=\"{display_name}\"}} {price}",
                 ));
             }
 

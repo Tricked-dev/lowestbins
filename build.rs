@@ -27,12 +27,12 @@ fn main() {
                 x.to_string().bright_green()
             }
         })
-        .map(|x| format!("{}", x))
+        .map(|x| format!("{x}"))
         .collect::<_>();
     fs::write(format!("{}/logo.txt", &env::var("OUT_DIR").unwrap()), res).unwrap();
     let output = format!("{}/sellprices.json", &env::var("OUT_DIR").unwrap());
     let output_compressed = format!("{}/sellprices.bin", &env::var("OUT_DIR").unwrap());
-    println!("cargo:rerun-if-changed={}", output);
+    println!("cargo:rerun-if-changed={output}");
     if fs::read(&output).is_err() {
         let _cmd = Command::new("curl")
             .arg("-o")

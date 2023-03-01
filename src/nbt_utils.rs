@@ -96,7 +96,7 @@ impl From<ItemBytes> for String {
 impl From<ItemBytes> for Result<Vec<u8>> {
     fn from(s: ItemBytes) -> Result<Vec<u8>> {
         let b64: String = s.into();
-        Ok(base64::decode(&b64)?)
+        Ok(base64::decode(b64)?)
     }
 }
 

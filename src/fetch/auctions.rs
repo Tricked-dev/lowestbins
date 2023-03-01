@@ -104,7 +104,7 @@ pub async fn get_auctions(page: i64, auctions: &DashMap<String, u64>) -> Result<
             }
         }
         Err(e) => {
-            send_webhook_text(&format!("Error: {:?}", e)).await?;
+            send_webhook_text(&format!("Error: {e:?}")).await?;
         }
     };
     Ok(())
