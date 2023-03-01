@@ -22,12 +22,13 @@ fn main() {
         .chars()
         .map(|x| {
             if x == '█' {
-                "█".dimmed().green()
+                "█".dimmed().green().to_string()
+            } else if x == ' ' || x == '\n' {
+                x.to_string()
             } else {
-                x.to_string().bright_green()
+                x.to_string().bright_green().to_string()
             }
         })
-        .map(|x| format!("{x}"))
         .collect::<_>();
     fs::write(format!("{}/logo.txt", &env::var("OUT_DIR").unwrap()), res).unwrap();
     let output = format!("{}/sellprices.json", &env::var("OUT_DIR").unwrap());
