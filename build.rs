@@ -1,9 +1,6 @@
-extern crate rmp_serde as rmps;
 use std::{collections::HashMap, env, fs, process::Command};
 
 use colored::{control::set_override, Colorize};
-use rmps::Serializer;
-use serde::Serialize;
 
 const LOC: &str = "https://raw.githubusercontent.com/Skytils/SkytilsMod-Data/main/constants/sellprices.json";
 static LOGO: &str = r#"
@@ -31,8 +28,9 @@ fn main() {
         })
         .collect::<_>();
     fs::write(format!("{}/logo.txt", &env::var("OUT_DIR").unwrap()), res).unwrap();
+
     let output = format!("{}/sellprices.json", &env::var("OUT_DIR").unwrap());
-    let output_compressed = format!("{}/sellprices.bin", &env::var("OUT_DIR").unwrap());
+
     println!("cargo:rerun-if-changed={output}");
     if fs::read(&output).is_err() {
         let _cmd = Command::new("curl")
@@ -45,15 +43,29 @@ fn main() {
     if fs::read(&output).is_err() {
         fs::write(&output, r#"{}"#).unwrap();
     }
-    if fs::read(&output_compressed).is_err() {
-        let mut buf = Vec::new();
-        serde_json::from_slice::<HashMap<String, f64>>(&fs::read(&output).unwrap())
-            .unwrap()
-            .into_iter()
-            .map(|(k, v)| (k, v.round() as u64))
-            .collect::<HashMap<String, u64>>()
-            .serialize(&mut Serializer::new(&mut buf))
-            .unwrap();
-        fs::write(&output_compressed, buf).unwrap();
-    }
+
+    let file = fs::read(&output).unwrap();
+    let file = serde_json::from_slice::<HashMap<String, f64>>(&file)
+        .unwrap()
+        .into_iter()
+        .map(|(k, v)| {
+            let v_u64 = v as u64;
+            quote::quote! {
+                (#k.to_owned(), #v_u64),
+            }
+        });
+
+    let len = file.len();
+    let default_prices = quote::quote! {
+        pub fn get_prices_map() -> [(String, u64); #len] {
+            [
+                #(#file)*
+            ]
+        }
+    };
+    fs::write("generated/prices_map.rs", default_prices.to_string()).unwrap();
+    let _cmd = Command::new("cargo")
+        .args(["fmt", "--", "generated/prices_map.rs"])
+        .output()
+        .expect("failed to execute process");
 }

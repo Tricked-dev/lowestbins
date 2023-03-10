@@ -118,13 +118,14 @@ pub fn calc_next_update() -> u64 {
         CONFIG.update_seconds - elapsed
     }
 }
+
+include!("../generated/prices_map.rs");
+
 // Honestly there should be a better way to do this in a more memory efficient way i think?
 pub static AUCTIONS: Lazy<Mutex<BTreeMap<String, u64>>> = Lazy::new(|| {
     let mut res: BTreeMap<String, u64> = fs::read("auctions.json")
         .map(|x| serde_json::from_slice(&x).unwrap())
         .unwrap_or_default();
-    let defaults = include_bytes!(concat!(env!("OUT_DIR"), "/sellprices.bin"));
-    let map = rmp_serde::from_slice::<BTreeMap<String, u64>>(defaults).unwrap();
-    res.extend(map);
+    res.extend(HashMap::from(get_prices_map()));
     Mutex::new(res)
 });

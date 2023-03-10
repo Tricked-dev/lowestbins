@@ -774,7 +774,7 @@ dependencies = [
 
 [[package]]
 name = "lowestbins"
-version = "1.4.1"
+version = "1.5.0"
 dependencies = [
  "anyhow",
  "base64",
@@ -790,6 +790,7 @@ dependencies = [
  "mimalloc",
  "once_cell",
  "parking_lot 0.12.1",
+ "quote",
  "rmp-serde",
  "serde",
  "serde_json",

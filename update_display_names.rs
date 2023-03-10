@@ -1,7 +1,4 @@
-extern crate rmp_serde as rmps;
-
-use rmps::Serializer;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::{collections::HashMap, fs};
 
 #[derive(Deserialize)]
@@ -52,7 +49,23 @@ fn main() {
             data.insert(file.internalname, displayname);
         }
     }
-    let mut buf = Vec::new();
-    data.serialize(&mut Serializer::new(&mut buf)).unwrap();
-    fs::write("./resources/display-names.bin", buf).unwrap();
+
+    let match_arms = data
+        .iter()
+        .map(|(key, value)| {
+            quote::quote! {
+                #key => #value,
+            }
+        })
+        .collect::<Vec<_>>();
+
+    let res = quote::quote! {
+        pub fn to_display_name(name: &str) -> &str {
+            match name {
+                  #(#match_arms)*
+                _ => name.to_string(),
+            }
+        }
+    };
+    fs::write("generated/to_display_name.rs", res.to_string()).unwrap();
 }

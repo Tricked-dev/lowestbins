@@ -1,12 +1,9 @@
-use std::collections::BTreeMap;
-
 use hyper::{
     header,
     http::response,
     service::{make_service_fn, service_fn},
     Body, Method, Request, Response, Server,
 };
-use once_cell::sync::Lazy;
 use serde_json::json;
 
 use crate::{calc_next_update, error::Result, round_to_nearest_15, AUCTIONS, CONFIG, SOURCE, SPONSOR};
@@ -44,7 +41,9 @@ fn response_base() -> response::Builder {
 }
 
 async fn response(req: Request<Body>) -> Result<Response<Body>> {
-    match (req.method(), req.uri().path()) {
+    let path = req.uri().path().trim_end_matches('/');
+
+    match (req.method(), path) {
         (&Method::GET, "/lowestbins.json") | (&Method::GET, "/lowestbins") | (&Method::GET, "/auctions/lowestbins") => {
             let bytes = serde_json::to_vec(&*AUCTIONS.lock())?;
             Ok(response_base().body(Body::from(bytes))?)
@@ -69,13 +68,9 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
             }
         }
         (&Method::GET, "/metrics") => {
-            static DISPLAY_NAMES: Lazy<BTreeMap<String, String>> = Lazy::new(|| {
-                let bytes = include_bytes!("../resources/display-names.bin");
-                rmp_serde::from_slice(bytes).unwrap()
-            });
             let mut res = "# HELP price Price of each item\n# TYPE price gauge".to_owned();
             for (item, price) in &*AUCTIONS.lock() {
-                let display_name = DISPLAY_NAMES.get(item).unwrap_or(item);
+                let display_name = to_display_name(item);
                 res.push_str(&format!(
                     "\nlowestbin_price{{item=\"{item}\", display=\"{display_name}\"}} {price}",
                 ));
@@ -83,7 +78,7 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
 
             Ok(response_base().body(Body::from(res)).unwrap())
         }
-        (_, "/") => Ok(response_base()
+        (_, "") => Ok(response_base()
             .header(header::CACHE_CONTROL, "max-age=2, s-maxage=2")
             .body(Body::from(serde_json::to_vec_pretty(&json!({
                 "message": "Welcome to the lowestbins API",
@@ -101,3 +96,5 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
 fn not_found() -> Response<Body> {
     response_base().status(404).body(NOTFOUND.into()).unwrap()
 }
+
+include!("../generated/to_display_name.rs");
