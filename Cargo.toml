@@ -39,10 +39,10 @@ tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros"] }
 # Serde
 serde = { version = "1", features = ["derive", "unstable"] }
 serde_json = "1"
-simd-json = { version = "0.6", optional = true }
+simd-json = { version = "0.7", optional = true }
 hematite-nbt = "0.5.2"
-dashmap = { version = "5.4", features = ["serde"] }
-base64 = "0.13"
+dashmap = { version = "5", features = ["serde"] }
+base64 = "0"
 # Tracing
 tracing = { version = "0", features = [] }
 tracing-subscriber = { version = "0.3", features = [
@@ -74,7 +74,7 @@ once_cell = { version = "1", features = ["parking_lot"] }
 anyhow = { version = "1", features = ["backtrace"] }
 mimalloc = { version = "0", default-features = false }
 parking_lot = { version = "0.12", features = ["serde", "arc_lock", "nightly"] }
-quote = "1.0.23"
+quote = "1"
 
 [build-dependencies]
 colored = "2.0"

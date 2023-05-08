@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use std::{collections::HashMap, fs};
+use std::{collections::BTreeMap, fs};
 
 #[derive(Deserialize)]
 struct Item {
@@ -39,7 +39,7 @@ fn main() {
             .unwrap();
     }
 
-    let mut data = HashMap::new();
+    let mut data = BTreeMap::new();
     for file in fs::read_dir("./neudata/items").unwrap() {
         let file = file.unwrap();
         if !file.file_type().unwrap().is_dir() && file.path().extension().unwrap() == "json" {

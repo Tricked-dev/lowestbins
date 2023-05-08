@@ -53,7 +53,9 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
             for (key, value) in &*AUCTIONS.lock() {
                 res.push_str(&format!("{key} {value}\n"));
             }
-            Ok(response_base().body(Body::from(res))?)
+            Ok(response_base()
+                .header(header::CONTENT_TYPE, "text/plain")
+                .body(Body::from(res))?)
         }
         (&Method::GET, route) if route.starts_with("/auction/") || route.starts_with("/lowestbin/") => {
             let id = route.trim_start_matches("/auction/").trim_start_matches("/lowestbin/");

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env, fs, process::Command};
+use std::{collections::BTreeMap, env, fs, process::Command};
 
 use colored::{control::set_override, Colorize};
 
@@ -45,7 +45,7 @@ fn main() {
     }
 
     let file = fs::read(&output).unwrap();
-    let file = serde_json::from_slice::<HashMap<String, f64>>(&file)
+    let file = serde_json::from_slice::<BTreeMap<String, f64>>(&file)
         .unwrap()
         .into_iter()
         .map(|(k, v)| {
@@ -63,9 +63,9 @@ fn main() {
             ]
         }
     };
-    fs::write("generated/prices_map.rs", default_prices.to_string()).unwrap();
-    let _cmd = Command::new("cargo")
-        .args(["fmt", "--", "generated/prices_map.rs"])
-        .output()
-        .expect("failed to execute process");
+    fs::write(
+        format!("{}/prices_map.rs", &env::var("OUT_DIR").unwrap()),
+        default_prices.to_string(),
+    )
+    .unwrap();
 }

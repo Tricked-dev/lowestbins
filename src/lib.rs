@@ -119,7 +119,7 @@ pub fn calc_next_update() -> u64 {
     }
 }
 
-include!("../generated/prices_map.rs");
+include!(concat!(env!("OUT_DIR"), "/prices_map.rs"));
 
 // Honestly there should be a better way to do this in a more memory efficient way i think?
 pub static AUCTIONS: Lazy<Mutex<BTreeMap<String, u64>>> = Lazy::new(|| {
