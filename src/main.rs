@@ -1,4 +1,4 @@
-use std::{env, fs, process};
+use std::{env, fs};
 
 use futures_util::future::join;
 use lowestbins::{error::Result, fetch::fetch_auctions, server::start_server, AUCTIONS, CONFIG, SOURCE};
@@ -32,21 +32,26 @@ fn main() -> Result<()> {
     res.lines().map(|s| tracing::info!("{}", s)).for_each(drop);
 
     if CONFIG.save_to_disk {
-        ctrlc::set_handler(move || {
-            if !AUCTIONS.is_locked() {
-                fs::write(
-                    "auctions.json",
-                    serde_json::to_string_pretty(&*AUCTIONS.lock()).unwrap(),
-                )
-                .unwrap();
-            } else {
-                tracing::error!("Auctions poisoned, not saving to disk");
+        rt.spawn(async {
+            let dur = Duration::from_secs(CONFIG.update_seconds);
+            let mut interval = time::interval(dur);
+            loop {
+                interval.tick().await;
+                if !AUCTIONS.is_locked() {
+                    match fs::write(
+                        "auctions.json",
+                        serde_json::to_string_pretty(&*AUCTIONS.lock()).unwrap(),
+                    ) {
+                        Ok(_) => tracing::debug!("Saved to disk"),
+                        Err(_) => tracing::error!(
+                            "Failed to save auctions to disk please give write permissions to current directory"
+                        ),
+                    };
+                } else {
+                    tracing::error!("Auctions poisoned, not saving to disk");
+                }
             }
-
-            println!();
-            tracing::info!("Wrote save to disk\n");
-            process::exit(0)
-        })?;
+        });
     }
     rt.spawn(async {
         let dur = Duration::from_secs(CONFIG.update_seconds);

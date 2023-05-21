@@ -26,7 +26,6 @@ opt-level = 3
 
 [features]
 default = []
-simd = ["simd-json"]
 
 [[bin]]
 name = "update_display_names"
@@ -39,7 +38,6 @@ tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros"] }
 # Serde
 serde = { version = "1", features = ["derive", "unstable"] }
 serde_json = "1"
-simd-json = { version = "0.7", optional = true }
 hematite-nbt = "0.5.2"
 dashmap = { version = "5", features = ["serde"] }
 base64 = "0"
@@ -68,7 +66,6 @@ isahc = { version = "1", default-features = false, features = [
     "static-ssl"
 ] }
 # Misc
-ctrlc = "3"
 flate2 = "1"
 once_cell = { version = "1", features = ["parking_lot"] }
 anyhow = { version = "1", features = ["backtrace"] }

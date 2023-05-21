@@ -11,8 +11,5 @@ pub async fn get_path<T: DeserializeOwned>(path: &'_ str) -> error::Result<T> {
         .bytes()
         .await?;
 
-    #[cfg(feature = "simd")]
-    return Ok(simd_json::from_slice(&mut text)?);
-    #[cfg(not(feature = "simd"))]
-    return Ok(serde_json::from_slice(&text)?);
+    Ok(serde_json::from_slice(&text)?)
 }
