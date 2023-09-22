@@ -58,13 +58,6 @@ hyper = { version = "0.14", features = [
     "http2",
     "nightly"
 ] }
-isahc = { version = "1", default-features = false, features = [
-    "http2",
-    "parking_lot",
-    "nightly",
-    "static-curl",
-    "static-ssl"
-] }
 # Misc
 flate2 = "1"
 once_cell = { version = "1", features = ["parking_lot"] }
@@ -72,6 +65,7 @@ anyhow = { version = "1", features = ["backtrace"] }
 mimalloc = { version = "0", default-features = false }
 parking_lot = { version = "0.12", features = ["serde", "arc_lock", "nightly"] }
 quote = "1"
+reqwest = { version = "0.11.20", default-features = false, features = ["http3"] }
 
 [build-dependencies]
 colored = "2.0"

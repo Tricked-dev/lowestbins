@@ -21,12 +21,12 @@ pub const SPONSOR: &str = "https://github.com/sponsors/Tricked-dev";
 use std::{
     collections::{BTreeMap, HashMap},
     env, fs,
-    time::Instant,
+    time::{Duration, Instant},
 };
 
-use isahc::{config::DnsCache, prelude::Configurable, HttpClient};
 use once_cell::sync::Lazy;
 use parking_lot::Mutex;
+use reqwest::Client;
 
 const UPDATE_SECONDS: &str = "UPDATE_SECONDS";
 const SAVE_TO_DISK: &str = "SAVE_TO_DISK";
@@ -81,15 +81,15 @@ impl Conf {
 pub static API_URL: Lazy<String> =
     Lazy::new(|| env::var(API_URL_ENV).unwrap_or_else(|_| "https://api.hypixel.net".to_owned()));
 pub static CONFIG: Lazy<Conf> = Lazy::new(Conf::init);
-pub static HTTP_CLIENT: Lazy<HttpClient> = Lazy::new(|| {
-    HttpClient::builder()
-        .default_header("user-agent", UA)
-        .max_connections_per_host(50)
-        .tcp_nodelay()
-        .dns_cache(DnsCache::Forever)
+
+pub static HTTP_CLIENT: Lazy<Client> = Lazy::new(|| {
+    Client::builder()
+        .user_agent(UA)
+        .danger_accept_invalid_certs(true)
         .build()
         .unwrap()
 });
+
 pub static LAST_UPDATED: Lazy<Mutex<Instant>> = Lazy::new(|| Mutex::new(Instant::now()));
 
 pub fn set_last_updates() {

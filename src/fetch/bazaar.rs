@@ -7,19 +7,19 @@ use std::collections::HashMap;
 
 use super::util::get_path;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct BazaarResponse {
     #[serde(rename = "products")]
     pub products: HashMap<String, Product>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct Product {
     #[serde(rename = "quick_status")]
     pub quick_status: QuickStatus,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct QuickStatus {
     #[serde(rename = "buyPrice")]
     pub buy_price: f64,
