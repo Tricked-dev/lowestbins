@@ -7,7 +7,7 @@
 [![GitHub issues](https://img.shields.io/github/issues/Tricked-dev/lowestbins)](https://github.com/Tricked-dev/lowestbins/issues) [![GitHub forks](https://img.shields.io/github/forks/Tricked-dev/lowestbins)](https://github.com/Tricked-dev/lowestbins/network)
 [![GitHub stars](https://img.shields.io/github/stars/Tricked-dev/lowestbins)](https://github.com/Tricked-dev/lowestbins/stargazers)
 [![GitHub license](https://img.shields.io/github/license/Tricked-dev/lowestbins)](https://github.com/Tricked-dev/lowestbins/blob/master/LICENSE)
-![Website](https://img.shields.io/website?url=https%3A%2F%2Flb.tricked.pro%2F)
+![Website](https://img.shields.io/website?url=https%3A%2F%2Flb.tricked.dev%2F)
 [![Discord](https://img.shields.io/discord/748956745409232945)](https://discord.gg/mY8zTARu4g)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/tricked-dev)](https://github.com/sponsors/Tricked-dev)
 
@@ -23,8 +23,7 @@ Lowestbins-rs is used by [Skytils](https://github.com/Skytils/SkytilsMod) for th
 
 ## Hosted Instance
 
-- [lb.tricked.pro/](https://lb.tricked.pro/)
-- [lb2.tricked.pro/](https://lb2.tricked.pro/) (alternative host)
+- [lb.tricked.dev/](https://lb.tricked.dev/)
 
 If you are using this in a project please credit me! or sponsor me on github [github.com/sponsors/Tricked-dev](https://github.com/sponsors/Tricked-dev)
 
@@ -36,7 +35,7 @@ If you are using this in a project please credit me! or sponsor me on github [gi
 
 ```js
 const fetch = require("undici"); // node-fetch also works
-let json = await fetch("https://lb.tricked.pro/lowestbins").then((res) =>
+let json = await fetch("https://lb.tricked.dev/lowestbins").then((res) =>
   res.json()
 );
 
@@ -46,7 +45,7 @@ console.log(json["ENCHANTMENT_ULTIMATE_SWARM_2"]);
 **web/deno:**
 
 ```js
-let json = await fetch("https://lb.tricked.pro/lowestbins").then((res) =>
+let json = await fetch("https://lb.tricked.dev/lowestbins").then((res) =>
   res.json()
 );
 console.log(json["ENCHANTMENT_ULTIMATE_SWARM_2"]);
@@ -56,7 +55,7 @@ console.log(json["ENCHANTMENT_ULTIMATE_SWARM_2"]);
 
 ```py
 import requests
-json = requests.get("https://lb.tricked.pro/lowestbins").json()
+json = requests.get("https://lb.tricked.dev/lowestbins").json()
 print(json["ENCHANTMENT_ULTIMATE_SWARM_2"])
 ```
 
