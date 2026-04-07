@@ -31,6 +31,7 @@ use reqwest::Client;
 
 const UPDATE_SECONDS: &str = "UPDATE_SECONDS";
 const SAVE_TO_DISK: &str = "SAVE_TO_DISK";
+const ENABLE_HISTORY: &str = "ENABLE_HISTORY";
 const OVERWRITES: &str = "OVERWRITES";
 const WEBHOOK_URL: &str = "WEBHOOK_URL";
 const PORT: &str = "PORT";
@@ -55,14 +56,14 @@ impl Conf {
         let save_to_disk = env::var(SAVE_TO_DISK).unwrap_or_else(|_| "0".to_owned());
         let update_seconds =
             env::var(UPDATE_SECONDS).map_or(60, |f| f.parse().expect("Invalid number for update_seconds"));
-        let enable_history = env::var("ENABLE_HISTORY").map(|v| v == "1").unwrap_or(true);
+        let enable_history = env::var(ENABLE_HISTORY).unwrap_or_else(|_| "0".to_owned());
         Self {
             webhook_url: env::var(WEBHOOK_URL).ok(),
             overwrites: Conf::get_overwrites(),
             host,
             port: port.parse().expect("Invalid port"),
             save_to_disk: save_to_disk != "0",
-            enable_history,
+            enable_history: enable_history != "0",
             update_seconds,
         }
     }
