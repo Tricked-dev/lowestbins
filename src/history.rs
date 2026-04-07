@@ -241,7 +241,7 @@ impl<'a> Serialize for AverageView<'a> {
 }
 
 static HISTORY: Lazy<Mutex<PriceHistory>> = Lazy::new(|| Mutex::new(PriceHistory::load_or_new()));
-static DYNAMIC_CACHE: Lazy<RwLock<HashMap<u8, Bytes>>> = Lazy::new(|| RwLock::new(HashMap::with_capacity(7)));
+static DYNAMIC_CACHE: Lazy<RwLock<HashMap<u8, Bytes>>> = Lazy::new(|| RwLock::new(HashMap::with_capacity(DAY_SLOTS)));
 
 pub fn get_cache(days: u8) -> Option<Bytes> {
     DYNAMIC_CACHE.read().get(&days).cloned()
@@ -260,8 +260,8 @@ where
             let mut h = HISTORY.lock();
             h.push_snapshot(prices);
             let current_ts = h.day_acc_start;
-            let mut new_caches = HashMap::with_capacity(7);
-            for days in 1..=7 {
+            let mut new_caches = HashMap::with_capacity(DAY_SLOTS);
+            for days in 1..=DAY_SLOTS {
                 let view = AverageView { history: &h, days: days as usize, current_ts };
                 let bytes = match serde_json::to_vec(&view) {
                     Ok(v) => Bytes::from(v),
