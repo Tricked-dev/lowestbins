@@ -80,16 +80,36 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
 
             Ok(response_base().body(Body::from(res)).unwrap())
         }
-        (_, "") => Ok(response_base()
-            .header(header::CACHE_CONTROL, "max-age=2, s-maxage=2")
-            .body(Body::from(serde_json::to_vec_pretty(&json!({
-                "message": "Welcome to the lowestbins API",
-                "endpoint": "/lowestbins",
-                "updates_in": calc_next_update(),
-                "funding": SPONSOR,
-                "source": SOURCE
-            }))?))?),
+        (&Method::GET, route) if route.starts_with("/averages/") && CONFIG.enable_history => {
+            let days_str = route.trim_start_matches("/averages/").trim_end_matches("day");
 
+            if let Ok(days) = days_str.parse::<u8>() {
+                if (1..=7).contains(&days) {
+                    if let Some(bytes) = crate::history::get_cache(days) {
+                        return Ok(response_base().body(Body::from(bytes))?);
+                    }
+                }
+            }
+            Ok(not_found())
+        }
+        (_, "") => {
+            let mut endpoints = vec!["/lowestbins".to_string()];
+            if CONFIG.enable_history {
+                for days in 1..=7 {
+                    endpoints.push(format!("/averages/{}day", days));
+                }
+            }
+            Ok(response_base()
+                .header(header::CACHE_CONTROL, "max-age=2, s-maxage=2")
+                .body(Body::from(serde_json::to_vec_pretty(&json!({
+                    "message": "Welcome to the lowestbins API",
+                    "endpoints": endpoints,
+                    "updates_in": calc_next_update(),
+                    "funding": SPONSOR,
+                    "source": SOURCE
+                }))?))?
+            )
+        },
         _ => Ok(not_found()),
     }
 }

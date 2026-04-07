@@ -34,13 +34,13 @@ path = "./update_display_names.rs"
 [dependencies]
 # Async
 futures-util = "0.3"
-tokio = { version = "1.32", features = ["rt", "rt-multi-thread", "macros"] }
+tokio = { version = "1.32", features = ["rt", "rt-multi-thread", "macros", "signal"] }
 # Serde
 serde = { version = "1.0", features = ["derive", "unstable"] }
 serde_json = "1.0"
 hematite-nbt = "0.5.2"
-dashmap = { version = "5.5", features = ["serde"] }
-base64 = "0.21"
+dashmap = { version = "6.1", features = ["serde"] }
+base64 = "0.22"
 # Tracing
 tracing = { version = "0.1", features = [] }
 tracing-subscriber = { version = "0.3", features = [
@@ -70,7 +70,7 @@ reqwest = { version = "0.11.20", default-features = false, features = [
 ] }
 
 [build-dependencies]
-colored = "2.0"
+colored = "3.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 quote = "1.0.23"

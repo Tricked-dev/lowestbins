@@ -6,6 +6,7 @@ pub mod fetch;
 pub mod nbt_utils;
 pub mod server;
 pub mod webhook;
+pub mod history;
 
 const UA: &str = concat!(
     env!("CARGO_PKG_NAME"),
@@ -44,6 +45,7 @@ pub struct Conf {
     pub port: u16,
     pub update_seconds: u64,
     pub save_to_disk: bool,
+    pub enable_history: bool,
 }
 
 impl Conf {
@@ -53,12 +55,14 @@ impl Conf {
         let save_to_disk = env::var(SAVE_TO_DISK).unwrap_or_else(|_| "0".to_owned());
         let update_seconds =
             env::var(UPDATE_SECONDS).map_or(60, |f| f.parse().expect("Invalid number for update_seconds"));
+        let enable_history = env::var("ENABLE_HISTORY").map(|v| v == "1").unwrap_or(true);
         Self {
             webhook_url: env::var(WEBHOOK_URL).ok(),
             overwrites: Conf::get_overwrites(),
             host,
             port: port.parse().expect("Invalid port"),
             save_to_disk: save_to_disk != "0",
+            enable_history,
             update_seconds,
         }
     }
