@@ -83,17 +83,15 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
         (&Method::GET, route) if route.starts_with("/averages/") && CONFIG.enable_history => {
             let days_str = route.trim_start_matches("/averages/").trim_end_matches("day");
 
-            if let Ok(days) = days_str.parse::<u8>() {
-                if (1..=7).contains(&days) {
-                    if let Some(bytes) = crate::history::get_cache(days) {
+            if let Ok(days) = days_str.parse::<u8>()
+                && (1..=7).contains(&days)
+                    && let Some(bytes) = crate::history::get_cache(days) {
                         return Ok(response_base().body(Body::from(bytes))?);
                     }
-                }
-            }
             Ok(not_found())
         }
         (_, "") => {
-            let mut endpoints = vec!["/lowestbins".to_string()];
+            let mut endpoints = vec!["/lowestbins".to_owned(), "/lowestbins.txt".to_owned()];
             if CONFIG.enable_history {
                 for days in 1..=7 {
                     endpoints.push(format!("/averages/{}day", days));
@@ -107,9 +105,8 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
                     "updates_in": calc_next_update(),
                     "funding": SPONSOR,
                     "source": SOURCE
-                }))?))?
-            )
-        },
+                }))?))?)
+        }
         _ => Ok(not_found()),
     }
 }

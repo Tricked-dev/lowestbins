@@ -52,11 +52,10 @@ struct PriceHistory {
 
 impl PriceHistory {
     fn load_or_new() -> Self {
-        if let Ok(bytes) = fs::read(PERSIST_PATH) {
-            if let Ok(p) = serde_json::from_slice::<PersistData>(&bytes) {
+        if let Ok(bytes) = fs::read(PERSIST_PATH)
+            && let Ok(p) = serde_json::from_slice::<PersistData>(&bytes) {
                 return Self::from_persist(p);
             }
-        }
         Self {
             item_index: HashMap::new(),
             items: Vec::new(),
