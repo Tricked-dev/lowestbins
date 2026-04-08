@@ -6,7 +6,7 @@ use std::{
 use hyper::body::Bytes;
 use once_cell::sync::Lazy;
 use parking_lot::{Mutex, RwLock};
-use serde::{Deserialize, Serialize, ser::SerializeMap};
+use serde::{ser::SerializeMap, Deserialize, Serialize};
 use tokio::task;
 
 const DAY_SLOTS: usize = 7;
@@ -83,9 +83,13 @@ impl PriceHistory {
                 items.push(key.to_owned());
             }
         };
-        for key in p.day_acc.keys() { ensure(key); }
+        for key in p.day_acc.keys() {
+            ensure(key);
+        }
         for (_, slot) in &p.day_slots {
-            for key in slot.keys() { ensure(key); }
+            for key in slot.keys() {
+                ensure(key);
+            }
         }
 
         let n = items.len();
@@ -99,19 +103,27 @@ impl PriceHistory {
             }
         }
 
-        let day_slots: VecDeque<_> = p.day_slots.into_iter().map(|(ts, map)| {
-            let mut sum = vec![0u64; n];
-            let mut count = vec![0u32; n];
-            for (key, (s, c)) in map {
-                if let Some(&idx) = item_index.get(&key) {
-                    sum[idx] = s;
-                    count[idx] = c;
+        let day_slots: VecDeque<_> = p
+            .day_slots
+            .into_iter()
+            .map(|(ts, map)| {
+                let mut sum = vec![0u64; n];
+                let mut count = vec![0u32; n];
+                for (key, (s, c)) in map {
+                    if let Some(&idx) = item_index.get(&key) {
+                        sum[idx] = s;
+                        count[idx] = c;
+                    }
                 }
-            }
-            (ts, sum, count)
-        }).collect();
+                (ts, sum, count)
+            })
+            .collect();
 
-        tracing::info!("Loaded price history from disk ({} items, {} completed days)", n, day_slots.len());
+        tracing::info!(
+            "Loaded price history from disk ({} items, {} completed days)",
+            n,
+            day_slots.len()
+        );
 
         Self {
             item_index,
@@ -143,7 +155,7 @@ impl PriceHistory {
 
     pub fn push_snapshot<I>(&mut self, prices: I)
     where
-        I: IntoIterator<Item = (String, u64)>
+        I: IntoIterator<Item = (String, u64)>,
     {
         let ts = now_secs();
         let current_day = day_start_of(ts);
@@ -169,18 +181,28 @@ impl PriceHistory {
     }
 
     fn to_persist(&self) -> PersistData {
-        let day_acc = self.items.iter().enumerate()
+        let day_acc = self
+            .items
+            .iter()
+            .enumerate()
             .filter(|(i, _)| self.day_acc_count[*i] > 0)
             .map(|(i, key)| (key.clone(), (self.day_acc_sum[i], self.day_acc_count[i])))
             .collect();
 
-        let day_slots = self.day_slots.iter().map(|(ts, sum, count)| {
-            let map = self.items.iter().enumerate()
-                .filter(|(i, _)| count[*i] > 0)
-                .map(|(i, key)| (key.clone(), (sum[i], count[i])))
-                .collect();
-            (*ts, map)
-        }).collect();
+        let day_slots = self
+            .day_slots
+            .iter()
+            .map(|(ts, sum, count)| {
+                let map = self
+                    .items
+                    .iter()
+                    .enumerate()
+                    .filter(|(i, _)| count[*i] > 0)
+                    .map(|(i, key)| (key.clone(), (sum[i], count[i])))
+                    .collect();
+                (*ts, map)
+            })
+            .collect();
 
         PersistData {
             day_acc_start: self.day_acc_start,
@@ -194,7 +216,6 @@ impl PriceHistory {
 struct AverageView<'a> {
     history: &'a PriceHistory,
     days: usize,
-    current_ts: u64,
 }
 
 impl<'a> Serialize for AverageView<'a> {
@@ -213,7 +234,10 @@ impl<'a> Serialize for AverageView<'a> {
         }
 
         // Add historical slots within window
-        let cutoff_ts = self.history.day_acc_start.saturating_sub((self.days as u64).saturating_sub(1) * 86400);
+        let cutoff_ts = self
+            .history
+            .day_acc_start
+            .saturating_sub((self.days as u64).saturating_sub(1) * 86400);
         for (ts, d_sum, d_count) in self.history.day_slots.iter().rev() {
             // Break early if the historical slot falls outside the requested chronological window
             if *ts < cutoff_ts {
@@ -251,18 +275,19 @@ pub fn get_cache(days: u8) -> Option<Bytes> {
 /// Accept any iterator that yields (String, u64) to avoid unnecessary collection conversions.
 pub fn update_history<I>(prices: I)
 where
-    I: IntoIterator<Item = (String, u64)> + Send + 'static
+    I: IntoIterator<Item = (String, u64)> + Send + 'static,
 {
-    if !crate::CONFIG.enable_history { return; } // Feature guard
+    if !crate::CONFIG.enable_history {
+        return;
+    } // Feature guard
 
     tokio::spawn(async move {
         let result = task::spawn_blocking(move || {
             let mut h = HISTORY.lock();
             h.push_snapshot(prices);
-            let current_ts = h.day_acc_start;
             let mut new_caches = HashMap::with_capacity(DAY_SLOTS);
             for days in 1..=DAY_SLOTS {
-                let view = AverageView { history: &h, days: days as usize, current_ts };
+                let view = AverageView { history: &h, days };
                 let bytes = match serde_json::to_vec(&view) {
                     Ok(v) => Bytes::from(v),
                     Err(e) => {
@@ -307,7 +332,7 @@ pub fn persist_now() {
             } else {
                 tracing::debug!("History successfully persisted to disk ({} bytes)", bytes.len());
             }
-        },
+        }
         Err(e) => tracing::error!("Failed to serialize history data: {e}"),
     }
 }
@@ -319,7 +344,7 @@ pub fn spawn_persist_task() {
         loop {
             interval.tick().await;
             // Use spawn_blocking for periodic saves to avoid stalling the executor
-            task::spawn_blocking(|| persist_now());
+            task::spawn_blocking(persist_now);
         }
     });
 }

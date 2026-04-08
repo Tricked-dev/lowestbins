@@ -29,54 +29,50 @@ pub fn parse_auctions(auctions: Vec<Item>, map: &DashMap<String, u64>) -> Result
             let mut id = nbt.tag.extra_attributes.id.clone();
             let count = nbt.count;
             let price = auction.starting_bid / count as u64;
-            match &nbt.tag.extra_attributes.pet {
-                Some(x) => {
-                    let v: Pet = serde_json::from_str(x)?;
-                    id = format!("PET-{}-{}", v.pet_type, v.tier);
-                    if let Some(level) = auction.pet_level().filter(|&l| l >= 100) {
-                        id = format!("{}-{}", id, (level / 100) * 100);
-                    }
+            if let Some(x) = &nbt.tag.extra_attributes.pet {
+                let v: Pet = serde_json::from_str(x)?;
+                id = format!("PET-{}-{}", v.pet_type, v.tier);
+                if let Some(level) = auction.pet_level().filter(|&l| l >= 100) {
+                    id = format!("{}-{}", id, (level / 100) * 100);
                 }
-                None => {}
             }
             match id.as_str() {
-                "POTION" => match &nbt.tag.extra_attributes.potion {
-                    Some(x) => match &nbt.tag.extra_attributes.potion_level {
-                        Some(y) => {
-                            if nbt.tag.extra_attributes.enhanced {
-                                id = format!("POTION-{}-{}-ENHANCED", x.to_ascii_uppercase(), y);
-                            } else {
-                                id = format!("POTION-{}-{}", x.to_ascii_uppercase(), y);
+                "POTION" => {
+                    if let Some(x) = &nbt.tag.extra_attributes.potion {
+                        match &nbt.tag.extra_attributes.potion_level {
+                            Some(y) => {
+                                if nbt.tag.extra_attributes.enhanced {
+                                    id = format!("POTION-{}-{}-ENHANCED", x.to_ascii_uppercase(), y);
+                                } else {
+                                    id = format!("POTION-{}-{}", x.to_ascii_uppercase(), y);
+                                }
+                            }
+                            None => {
+                                id = format!("POTION-{}", x.to_ascii_uppercase());
                             }
                         }
-                        None => {
-                            id = format!("POTION-{}", x.to_ascii_uppercase());
-                        }
-                    },
-                    None => {}
-                },
-                "RUNE" => match &nbt.tag.extra_attributes.runes {
-                    Some(x) => {
+                    }
+                }
+                "RUNE" => {
+                    if let Some(x) = &nbt.tag.extra_attributes.runes {
                         if x.len() == 1 {
                             for (key, val) in x.iter() {
                                 id = format!("RUNE-{}-{}", key.to_ascii_uppercase(), val);
                             }
                         }
                     }
-                    None => {}
-                },
-                "NEW_YEAR_CAKE" => match &nbt.tag.extra_attributes.new_years_cake {
-                    Some(cake_year) => {
+                }
+                "NEW_YEAR_CAKE" => {
+                    if let Some(cake_year) = &nbt.tag.extra_attributes.new_years_cake {
                         id = format!("NEW_YEAR_CAKE-{}", cake_year);
                         min_cake_price = Some(min_cake_price.map_or(price, |p| p.min(price)));
                     }
-                    None => {}
-                },
+                }
 
                 _ => {}
             }
 
-            if nbt.tag.extra_attributes.baseStatBoostPercentage == Some(50) {
+            if nbt.tag.extra_attributes.base_stat_boost_percentage == Some(50) {
                 id.push_str("-PERFECT");
             }
 

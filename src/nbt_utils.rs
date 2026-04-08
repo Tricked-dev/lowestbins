@@ -46,7 +46,8 @@ pub struct PartialExtraAttr {
     pub runes: Option<HashMap<String, u8>>,
     pub attributes: Option<HashMap<String, u8>>,
     pub new_years_cake: Option<u16>,
-    pub baseStatBoostPercentage: Option<u8>,
+    #[serde(rename = "baseStatBoostPercentage")]
+    pub base_stat_boost_percentage: Option<u8>,
 }
 
 #[derive(Deserialize)]

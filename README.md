@@ -18,7 +18,7 @@
 
 </div>
 
-A fast and effecient lowestbins implementation this uses parrallel requests to fetch all lowestbins in less than **2.5 SECONDS** and uses the hyper server allowing for practically unlimited requests per second while only using 50mb of ram!  
+A fast and effecient lowestbins implementation this uses parrallel requests to fetch all lowestbins in less than **2.5 SECONDS** and uses the hyper server allowing for practically unlimited requests per second while only using 50mb of ram!
 Lowestbins-rs is used by [Skytils](https://github.com/Skytils/SkytilsMod) for the lowestbins feature.
 
 ## Hosted Instance
@@ -122,7 +122,7 @@ OVERWRITES # Overwrite values format: `BLESSED_BAIT:200,ROCK_CANDY:6000,NON_EXIS
 UPDATE_SECONDS # The amount of seconds to wait before updating the lowestbins
 WEBHOOK_URL # The webhook url used for reporting the requests (discord/discord compatible)
 RUST_LOG # The log level lowestbins=debug recommended
-ENABLE_HISTORY # set to 1 to enable historical price tracking (default: 1)
+ENABLE_HISTORY # set to 1 to enable historical price tracking (default: 0)
 ```
 
 ## Features

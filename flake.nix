@@ -79,6 +79,9 @@
 
             shellHook = ''
               export RUSTFLAGS='--cfg reqwest_unstable'
+              export PORT=8081
+              export ENABLE_HISTORY=1
+              export SAVE_TO_DISK=1
               if [ -f .env ]; then
                 set -a
                 source .env

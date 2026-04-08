@@ -1,7 +1,6 @@
 pub fn to_display_name(name: &str) -> &str {
     match name {
         "6_ANNIVERSARY_BARN_SKIN" => "6th Anniversary Barn Skin",
-        "6_ANNIVERSARY_BARN_SKIN" => "6th Anniversary Barn Skin",
         "AATROX_BADPHONE" => "Maddox Badphone",
         "AATROX_BATPHONE" => "Maddox Batphone",
         "AATROX_MAYOR_MONSTER" => "Aatrox (Mayor)",

@@ -1,12 +1,11 @@
 #![doc = include_str!("../README.md")]
-#![feature(test)]
 
 pub mod error;
 pub mod fetch;
+pub mod history;
 pub mod nbt_utils;
 pub mod server;
 pub mod webhook;
-pub mod history;
 
 const UA: &str = concat!(
     env!("CARGO_PKG_NAME"),
@@ -22,7 +21,7 @@ pub const SPONSOR: &str = "https://github.com/sponsors/Tricked-dev";
 use std::{
     collections::{BTreeMap, HashMap},
     env, fs,
-    time::{Duration, Instant},
+    time::Instant,
 };
 
 use once_cell::sync::Lazy;
@@ -117,11 +116,7 @@ pub fn round_to_nearest_15(value: u64) -> u64 {
 pub fn calc_next_update() -> u64 {
     let last_updated = LAST_UPDATED.lock();
     let elapsed = last_updated.elapsed().as_secs();
-    if elapsed > CONFIG.update_seconds {
-        0
-    } else {
-        CONFIG.update_seconds - elapsed
-    }
+    CONFIG.update_seconds.saturating_sub(elapsed)
 }
 
 include!(concat!(env!("OUT_DIR"), "/prices_map.rs"));
