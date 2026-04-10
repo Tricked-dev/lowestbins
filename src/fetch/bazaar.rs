@@ -1,6 +1,5 @@
 use crate::error::Result;
 
-use dashmap::DashMap;
 use serde::Deserialize;
 
 use std::collections::HashMap;
@@ -24,14 +23,15 @@ pub struct QuickStatus {
     #[serde(rename = "buyPrice")]
     pub buy_price: f64,
 }
+
 pub async fn get_bazaar() -> Result<BazaarResponse> {
     get_path("bazaar").await
 }
 
-pub async fn get_bazaar_products(auctions: &DashMap<String, u64>) -> Result<()> {
+pub async fn get_bazaar_products() -> Result<HashMap<String, u64>> {
     let bz = get_bazaar().await?;
-    let prods = bz.products;
-    for (mut key, val) in prods.into_iter() {
+    let mut map = HashMap::new();
+    for (mut key, val) in bz.products.into_iter() {
         if key.starts_with("ENCHANTMENT") {
             let mut split = key.split('_');
             split.next();
@@ -42,7 +42,7 @@ pub async fn get_bazaar_products(auctions: &DashMap<String, u64>) -> Result<()> 
 
             key = format!("ENCHANTED_BOOK-{}-{}", name_parts.join("_"), level[0]);
         }
-        auctions.insert(key, val.quick_status.buy_price.round() as u64);
+        map.insert(key, val.quick_status.buy_price.round() as u64);
     }
-    Ok(())
+    Ok(map)
 }

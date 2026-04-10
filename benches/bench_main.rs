@@ -1,7 +1,6 @@
 use std::io::{Cursor, Read};
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use dashmap::DashMap;
 
 use lowestbins::{
     fetch::auctions::{parse_auctions, HypixelResponse},
@@ -34,9 +33,8 @@ fn parse_hypixel_auctions(c: &mut Criterion) {
     c.bench_function("Parsing Hypixel Responses", move |b| {
         b.iter(|| {
             let items = black_box(&items);
-            let auctions: DashMap<String, u64> = DashMap::new();
             for item in items.iter() {
-                parse_auctions(item.auctions.clone(), &auctions).unwrap();
+                let _ = parse_auctions(item.auctions.clone()).unwrap();
             }
         })
     });

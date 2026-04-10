@@ -1,9 +1,9 @@
-use std::{env, fs};
-
 use futures_util::future::join;
-use lowestbins::{error::Result, fetch::fetch_auctions, server::start_server, AUCTIONS, CONFIG, SOURCE};
+use lowestbins::{error::Result, fetch::fetch_auctions, server::start_server, CONFIG, SOURCE, STORE};
 use mimalloc::MiMalloc;
-use tokio::{time, time::Duration, signal};
+use tokio::{signal, time, time::Duration};
+
+use std::env;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -18,7 +18,6 @@ pub fn create_basic_runtime() -> tokio::runtime::Runtime {
         .unwrap()
 }
 
-// This function handles all termination signals for both Unix (Docker/Linux) and Windows.
 async fn wait_for_shutdown() -> Result<()> {
     let ctrl_c = async {
         signal::ctrl_c()
@@ -36,9 +35,12 @@ async fn wait_for_shutdown() -> Result<()> {
 
     #[cfg(windows)]
     let terminate = async {
-        let mut ctrl_break = signal::windows::ctrl_break().map_err(|e| anyhow::anyhow!("Failed to install Ctrl+Break: {e}"))?;
-        let mut ctrl_close = signal::windows::ctrl_close().map_err(|e| anyhow::anyhow!("Failed to install Ctrl+Close: {e}"))?;
-        let mut ctrl_shutdown = signal::windows::ctrl_shutdown().map_err(|e| anyhow::anyhow!("Failed to install Ctrl+Shutdown: {e}"))?;
+        let mut ctrl_break = signal::windows::ctrl_break()
+            .map_err(|e| anyhow::anyhow!("Failed to install Ctrl+Break: {e}"))?;
+        let mut ctrl_close = signal::windows::ctrl_close()
+            .map_err(|e| anyhow::anyhow!("Failed to install Ctrl+Close: {e}"))?;
+        let mut ctrl_shutdown = signal::windows::ctrl_shutdown()
+            .map_err(|e| anyhow::anyhow!("Failed to install Ctrl+Shutdown: {e}"))?;
 
         tokio::select! {
             _ = ctrl_break.recv() => {},
@@ -69,43 +71,21 @@ fn main() -> Result<()> {
     let rt = create_basic_runtime();
 
     let res = format!(
-        "Loaded {} auctions from save\nMade by Tricked-dev - source: {SOURCE}\nOverwrites {:?}, Save To Disk: {}, Update Seconds: {}",
-        AUCTIONS.lock().len(),
+        "Made by Tricked-dev - source: {SOURCE}\nStore: {}, Overwrites {:?}, Update Seconds: {}",
+        &*STORE,
         &CONFIG.overwrites,
-        &CONFIG.save_to_disk,
         &CONFIG.update_seconds,
     );
     println!("{}", LOGO);
-    res.lines().map(|s| tracing::info!("{}", s)).for_each(drop);
+    res.lines()
+        .map(|s| tracing::info!("{}", s))
+        .for_each(drop);
 
-    if CONFIG.save_to_disk {
-        rt.spawn(async {
-            let dur = Duration::from_secs(CONFIG.update_seconds);
-            let mut interval = time::interval(dur);
-            loop {
-                interval.tick().await;
-                if !AUCTIONS.is_locked() {
-                    match fs::write(
-                        "auctions.json",
-                        serde_json::to_string_pretty(&*AUCTIONS.lock()).unwrap(),
-                    ) {
-                        Ok(_) => tracing::debug!("Saved to disk"),
-                        Err(_) => tracing::error!(
-                            "Failed to save auctions to disk please give write permissions to current directory"
-                        ),
-                    };
-                } else {
-                    tracing::error!("Auctions poisoned, not saving to disk");
-                }
-            }
-        });
-    }
     rt.spawn(async {
         let dur = Duration::from_secs(CONFIG.update_seconds);
         let mut interval = time::interval(dur);
         interval.tick().await;
         loop {
-            // Dont spawn a thread but instead wait for both futures to finish and continue
             join(
                 async {
                     if let Err(e) = fetch_auctions().await {
@@ -119,7 +99,6 @@ fn main() -> Result<()> {
     });
 
     rt.block_on(async {
-        lowestbins::history::spawn_persist_task();
         tokio::select! {
             res = start_server() => {
                 if let Err(e) = res {
@@ -130,10 +109,9 @@ fn main() -> Result<()> {
                 if let Err(e) = shutdown_res {
                     tracing::error!("Shutdown handler error: {e}");
                 }
-                tracing::info!("Initiating graceful shutdown sequence...");
+                tracing::info!("Shutting down");
             }
         }
-        lowestbins::history::persist_now();
         Ok::<(), anyhow::Error>(())
     })?;
 

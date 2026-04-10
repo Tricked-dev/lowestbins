@@ -6,8 +6,14 @@ use hyper::{
 };
 use serde_json::json;
 
-use crate::{calc_next_update, error::Result, round_to_nearest_15, AUCTIONS, CONFIG, SOURCE, SPONSOR};
-// add a json not found response
+use crate::{
+    calc_next_update,
+    error::Result,
+    round_to_nearest_15,
+    store::parse_query_params,
+    CONFIG, SOURCE, SPONSOR, STORE,
+};
+
 static NOTFOUND: &[u8] = b"{\"error\": \"not found\"}";
 
 pub async fn start_server() -> Result<()> {
@@ -28,67 +34,85 @@ pub async fn start_server() -> Result<()> {
     Ok(())
 }
 
-fn response_base() -> response::Builder {
-    let update = round_to_nearest_15(calc_next_update());
+fn response_base(cache_secs: u64) -> response::Builder {
+    let cache = round_to_nearest_15(cache_secs);
     Response::builder()
         .header(header::CONTENT_TYPE, "application/json")
         .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
         .header(header::ACCESS_CONTROL_ALLOW_METHODS, "GET, OPTIONS")
         .header(header::ACCESS_CONTROL_ALLOW_HEADERS, "*")
-        .header(header::CACHE_CONTROL, format!("max-age={update}, s-maxage={update}"))
+        .header(
+            header::CACHE_CONTROL,
+            format!("max-age={cache}, s-maxage={cache}"),
+        )
         .header(header::ACCESS_CONTROL_MAX_AGE, "86400")
         .header("funding", SPONSOR)
 }
 
 async fn response(req: Request<Body>) -> Result<Response<Body>> {
     let path = req.uri().path().trim_end_matches('/');
+    let query = req.uri().query();
+    let (source_filter, price_mode) = parse_query_params(query);
+    let next_update = calc_next_update().await;
 
     match (req.method(), path) {
-        (&Method::GET, "/lowestbins.json") | (&Method::GET, "/lowestbins") | (&Method::GET, "/auctions/lowestbins") => {
-            let bytes = serde_json::to_vec(&*AUCTIONS.lock())?;
-            Ok(response_base().body(Body::from(bytes))?)
+        (&Method::GET, "/lowestbins.json")
+        | (&Method::GET, "/lowestbins")
+        | (&Method::GET, "/auctions/lowestbins") => {
+            let prices = STORE.resolve_prices(source_filter, price_mode).await?;
+            let bytes = serde_json::to_vec(&prices)?;
+            Ok(response_base(next_update).body(Body::from(bytes))?)
         }
         (&Method::GET, "/lowestbins.txt") => {
+            let prices = STORE.resolve_prices(source_filter, price_mode).await?;
             let mut res = String::new();
-            for (key, value) in &*AUCTIONS.lock() {
+            for (key, value) in &prices {
                 res.push_str(&format!("{key} {value}\n"));
             }
-            Ok(response_base()
+            Ok(response_base(next_update)
                 .header(header::CONTENT_TYPE, "text/plain")
                 .body(Body::from(res))?)
         }
-        (&Method::GET, route) if route.starts_with("/auction/") || route.starts_with("/lowestbin/") => {
-            let id = route.trim_start_matches("/auction/").trim_start_matches("/lowestbin/");
-            let auctions = AUCTIONS.lock();
-            let value = auctions.get(id);
+        (&Method::GET, route)
+            if route.starts_with("/auction/") || route.starts_with("/lowestbin/") =>
+        {
+            let id = route
+                .trim_start_matches("/auction/")
+                .trim_start_matches("/lowestbin/");
+            let prices = STORE.resolve_prices(source_filter, price_mode).await?;
 
-            if let Some(auction) = value {
-                let bytes = serde_json::to_vec(&auction)?;
-                Ok(response_base().body(Body::from(bytes))?)
+            if let Some(price) = prices.get(id) {
+                let bytes = serde_json::to_vec(price)?;
+                Ok(response_base(next_update).body(Body::from(bytes))?)
             } else {
-                Ok(not_found())
+                Ok(not_found(next_update))
             }
         }
         (&Method::GET, "/metrics") => {
+            let prices = STORE.resolve_prices(source_filter, price_mode).await?;
             let mut res = "# HELP price Price of each item\n# TYPE price gauge".to_owned();
-            for (item, price) in &*AUCTIONS.lock() {
+            for (item, price) in &prices {
                 let display_name = to_display_name(item);
                 res.push_str(&format!(
                     "\nlowestbin_price{{item=\"{item}\", display=\"{display_name}\"}} {price}",
                 ));
             }
 
-            Ok(response_base().body(Body::from(res)).unwrap())
+            Ok(response_base(next_update).body(Body::from(res)).unwrap())
         }
         (&Method::GET, route) if route.starts_with("/averages/") && CONFIG.enable_history => {
-            let days_str = route.trim_start_matches("/averages/").trim_end_matches("day");
+            let days_str = route
+                .trim_start_matches("/averages/")
+                .trim_end_matches("day");
 
             if let Ok(days) = days_str.parse::<u8>()
                 && (1..=7).contains(&days)
-                    && let Some(bytes) = crate::history::get_cache(days) {
-                        return Ok(response_base().body(Body::from(bytes))?);
-                    }
-            Ok(not_found())
+            {
+                let averages = STORE.resolve_averages(source_filter, days).await?;
+                let bytes = serde_json::to_vec(&averages)?;
+                return Ok(response_base(next_update).body(Body::from(bytes))?);
+            }
+            Ok(not_found(next_update))
         }
         (_, "") => {
             let mut endpoints = vec!["/lowestbins".to_owned(), "/lowestbins.txt".to_owned()];
@@ -97,23 +121,25 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
                     endpoints.push(format!("/averages/{}day", days));
                 }
             }
-            Ok(response_base()
-                .header(header::CACHE_CONTROL, "max-age=2, s-maxage=2")
+            Ok(response_base(2)
                 .body(Body::from(serde_json::to_vec_pretty(&json!({
                     "message": "Welcome to the lowestbins API",
                     "endpoints": endpoints,
-                    "updates_in": calc_next_update(),
+                    "parameters": {
+                        "type": "auction | bazaar | all (default: all)",
+                        "price": "available | historical (default: historical)"
+                    },
+                    "updates_in": next_update,
                     "funding": SPONSOR,
                     "source": SOURCE
                 }))?))?)
         }
-        _ => Ok(not_found()),
+        _ => Ok(not_found(next_update)),
     }
 }
 
-/// HTTP status code 404
-fn not_found() -> Response<Body> {
-    response_base().status(404).body(NOTFOUND.into()).unwrap()
+fn not_found(cache_secs: u64) -> Response<Body> {
+    response_base(cache_secs).status(404).body(NOTFOUND.into()).unwrap()
 }
 
 include!("../generated/to_display_name.rs");

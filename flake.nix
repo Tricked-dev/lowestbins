@@ -73,15 +73,18 @@
               rustToolchain
               ffmpeg
               libqalculate
+              valkey
             ];
 
             LD_LIBRARY_PATH = lib.makeLibraryPath [ openssl ];
 
             shellHook = ''
-              export RUSTFLAGS='--cfg reqwest_unstable'
+              if [ "$(uname)" = "Linux" ]; then
+                export RUSTFLAGS='--cfg reqwest_unstable'
+              fi
               export PORT=8081
               export ENABLE_HISTORY=1
-              export SAVE_TO_DISK=1
+              # export REDIS_URL=redis://localhost:6379  # uncomment to use Valkey
               if [ -f .env ]; then
                 set -a
                 source .env

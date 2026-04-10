@@ -1,48 +1,93 @@
 use crate::{
     error::Result,
     fetch::{
-        auctions::{get_auctions, get_auctions_page, parse_auctions},
+        auctions::{get_auctions_page, get_auctions_page_parsed, parse_auctions},
         bazaar::get_bazaar_products,
     },
-    set_last_updates,
     webhook::*,
-    AUCTIONS, CONFIG,
+    CONFIG, STORE,
 };
 
-use dashmap::DashMap;
 use futures_util::{stream::FuturesUnordered, FutureExt, StreamExt};
 
+use std::collections::HashMap;
 use std::time::Instant;
 
 pub mod auctions;
 pub mod bazaar;
 pub mod util;
 
+enum FetchResult {
+    Auction(HashMap<String, u64>),
+    Bazaar(HashMap<String, u64>),
+}
+
 pub async fn fetch_auctions() -> Result<()> {
-    let start = std::time::Instant::now();
+    let start = Instant::now();
     let hs = get_auctions_page(0).await?;
 
-    let auctions: DashMap<String, u64> = DashMap::new();
-    parse_auctions(hs.auctions, &auctions)?;
+    let first_page = parse_auctions(hs.auctions)?;
 
-    let futures = FuturesUnordered::new();
+    let futures: FuturesUnordered<_> = FuturesUnordered::new();
     let n = Instant::now();
-    for url in 1..hs.total_pages {
-        futures.push(get_auctions(url, &auctions).boxed());
-    }
-    futures.push(get_bazaar_products(&auctions).boxed());
 
-    let _: Vec<_> = futures.collect().await;
-    let fetched = auctions.len();
+    for page in 1..hs.total_pages {
+        futures.push(
+            async move {
+                get_auctions_page_parsed(page)
+                    .await
+                    .map(FetchResult::Auction)
+            }
+            .boxed(),
+        );
+    }
+    futures.push(
+        async {
+            get_bazaar_products()
+                .await
+                .map(FetchResult::Bazaar)
+        }
+        .boxed(),
+    );
+
+    let mut auction_prices = first_page;
+    let mut bazaar_prices = HashMap::new();
+
+    let results: Vec<_> = futures.collect().await;
+    for result in results {
+        match result {
+            Ok(FetchResult::Bazaar(bz)) => {
+                bazaar_prices = bz;
+            }
+            Ok(FetchResult::Auction(page)) => {
+                for (key, price) in page {
+                    let entry = auction_prices.entry(key).or_insert(u64::MAX);
+                    if price < *entry {
+                        *entry = price;
+                    }
+                }
+            }
+            Err(e) => {
+                tracing::error!("Error fetching page: {e:?}");
+            }
+        }
+    }
+
+    // Seed bazaar with hardcoded sell prices (only if not already present from live data)
+    for (key, price) in crate::get_prices_map() {
+        bazaar_prices.entry(key).or_insert(price);
+    }
+
+    // Apply overwrites to auction prices
+    for (key, price) in &CONFIG.overwrites {
+        auction_prices.insert(key.clone(), *price);
+    }
+
+    let fetched = auction_prices.len() + bazaar_prices.len();
     let fetch_time = n.elapsed();
 
-    let mut new_auctions = DashMap::new();
-    new_auctions.extend(auctions.clone());
-    drop(auctions);
-    new_auctions.extend(CONFIG.overwrites.clone());
+    tracing::debug!("Fetched {} items in {:?}", fetched, fetch_time);
 
-    tracing::debug!("Fetched {} auctions in {:?}", fetched, fetch_time);
-    // It only sends if the WEBHOOK_URL env var is set
     send_embed(Message::new(
         "Auctions updated".to_owned(),
         vec![Embed::new(
@@ -57,13 +102,11 @@ pub async fn fetch_auctions() -> Result<()> {
     ))
     .await?;
 
-    let snapshot = {
-        let mut auc = AUCTIONS.lock();
-        auc.extend(new_auctions);
-        set_last_updates();
-        auc.clone()
-    };
-    crate::history::update_history(snapshot);
+    // Write to store
+    let store = &*STORE;
+    if let Err(e) = store.write_cycle(auction_prices, bazaar_prices).await {
+        tracing::error!("Store write_cycle failed: {e:?}");
+    }
 
     Ok(())
 }

@@ -4,7 +4,8 @@ use crate::{
     webhook::*,
 };
 
-use dashmap::DashMap;
+use std::collections::HashMap;
+
 use serde::Deserialize;
 
 use super::util::get_path;
@@ -21,7 +22,8 @@ pub async fn get_auctions_page(page: i64) -> Result<HypixelResponse> {
     get_path(&format!("auctions?page={page}")).await
 }
 
-pub fn parse_auctions(auctions: Vec<Item>, map: &DashMap<String, u64>) -> Result<()> {
+pub fn parse_auctions(auctions: Vec<Item>) -> Result<HashMap<String, u64>> {
+    let mut map: HashMap<String, u64> = HashMap::new();
     let mut min_cake_price: Option<u64> = None;
     for auction in auctions.iter() {
         if auction.bin {
@@ -75,38 +77,30 @@ pub fn parse_auctions(auctions: Vec<Item>, map: &DashMap<String, u64>) -> Result
                 id.push_str("-PERFECT");
             }
 
-            let r = map.get(&id);
-            if let Some(x) = r
-                && *x < price {
-                    continue;
-                }
+            if let Some(&x) = map.get(&id)
+                && x < price
+            {
+                continue;
+            }
             map.insert(id, price);
         }
     }
     if let Some(price) = min_cake_price {
-        map.insert("NEW_YEAR_CAKE".to_owned(), price);
+        let existing = map.get("NEW_YEAR_CAKE");
+        if existing.is_none_or(|&p| price < p) {
+            map.insert("NEW_YEAR_CAKE".to_owned(), price);
+        }
     }
-    Ok(())
+    Ok(map)
 }
 
-pub async fn get_auctions(page: i64, auctions: &DashMap<String, u64>) -> Result<()> {
+pub async fn get_auctions_page_parsed(page: i64) -> Result<HashMap<String, u64>> {
     let res = get_auctions_page(page).await;
     match res {
-        Ok(res) => {
-            let map = DashMap::new();
-            parse_auctions(res.auctions, &map)?;
-
-            for (x, y) in map.into_iter() {
-                if let Some(s) = auctions.get(&x)
-                    && *s < y {
-                        continue;
-                    };
-                auctions.insert(x.to_owned(), y);
-            }
-        }
+        Ok(res) => parse_auctions(res.auctions),
         Err(e) => {
             send_webhook_text(&format!("Error: {e:?}")).await?;
+            Ok(HashMap::new())
         }
-    };
-    Ok(())
+    }
 }

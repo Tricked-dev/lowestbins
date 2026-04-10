@@ -2,9 +2,9 @@
 
 pub mod error;
 pub mod fetch;
-pub mod history;
 pub mod nbt_utils;
 pub mod server;
+pub mod store;
 pub mod webhook;
 
 const UA: &str = concat!(
@@ -18,24 +18,21 @@ const UA: &str = concat!(
 pub const SOURCE: &str = "https://github.com/Tricked-dev/lowestbins";
 pub const SPONSOR: &str = "https://github.com/sponsors/Tricked-dev";
 
-use std::{
-    collections::{BTreeMap, HashMap},
-    env, fs,
-    time::Instant,
-};
+use std::{collections::HashMap, env};
 
 use once_cell::sync::Lazy;
-use parking_lot::Mutex;
 use reqwest::Client;
 
+use crate::store::Store;
+
 const UPDATE_SECONDS: &str = "UPDATE_SECONDS";
-const SAVE_TO_DISK: &str = "SAVE_TO_DISK";
 const ENABLE_HISTORY: &str = "ENABLE_HISTORY";
 const OVERWRITES: &str = "OVERWRITES";
 const WEBHOOK_URL: &str = "WEBHOOK_URL";
 const PORT: &str = "PORT";
 const HOST: &str = "HOST";
 const API_URL_ENV: &str = "API_URL";
+const REDIS_URL_ENV: &str = "REDIS_URL";
 
 #[derive(Debug)]
 pub struct Conf {
@@ -44,15 +41,14 @@ pub struct Conf {
     pub host: String,
     pub port: u16,
     pub update_seconds: u64,
-    pub save_to_disk: bool,
     pub enable_history: bool,
+    pub redis_url: Option<String>,
 }
 
 impl Conf {
     fn init() -> Self {
         let host = env::var(HOST).unwrap_or_else(|_| "127.0.0.1".to_owned());
         let port = env::var(PORT).unwrap_or_else(|_| "8080".to_string());
-        let save_to_disk = env::var(SAVE_TO_DISK).unwrap_or_else(|_| "0".to_owned());
         let update_seconds =
             env::var(UPDATE_SECONDS).map_or(60, |f| f.parse().expect("Invalid number for update_seconds"));
         let enable_history = env::var(ENABLE_HISTORY).unwrap_or_else(|_| "0".to_owned());
@@ -61,9 +57,9 @@ impl Conf {
             overwrites: Conf::get_overwrites(),
             host,
             port: port.parse().expect("Invalid port"),
-            save_to_disk: save_to_disk != "0",
             enable_history: enable_history != "0",
             update_seconds,
+            redis_url: env::var(REDIS_URL_ENV).ok(),
         }
     }
     fn get_overwrites() -> HashMap<String, u64> {
@@ -80,8 +76,6 @@ impl Conf {
     }
 }
 
-// Using lazy it's considered better than lazy_static!
-
 pub static API_URL: Lazy<String> =
     Lazy::new(|| env::var(API_URL_ENV).unwrap_or_else(|_| "https://api.hypixel.net".to_owned()));
 pub static CONFIG: Lazy<Conf> = Lazy::new(Conf::init);
@@ -94,38 +88,39 @@ pub static HTTP_CLIENT: Lazy<Client> = Lazy::new(|| {
         .unwrap()
 });
 
-pub static LAST_UPDATED: Lazy<Mutex<Instant>> = Lazy::new(|| Mutex::new(Instant::now()));
-
-pub fn set_last_updates() {
-    *LAST_UPDATED.lock() = Instant::now();
-}
-
-pub fn round_to_nearest_15(value: u64) -> u64 {
-    let remainder = value % 15;
-    if value < 15 {
-        15
-    } else if remainder == 0 {
-        value
-    } else if remainder < 8 {
-        value - remainder
+pub static STORE: Lazy<Store> = Lazy::new(|| {
+    // Store initialization is sync for Lazy. RedisStore needs async init,
+    // so we create a temporary runtime for the connection.
+    if let Some(url) = &CONFIG.redis_url {
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_io()
+            .build()
+            .expect("Failed to create runtime for Redis connection");
+        let redis_store = rt
+            .block_on(store::RedisStore::new(url))
+            .expect("Failed to connect to Redis");
+        Store::Redis(redis_store)
     } else {
-        value + (15 - remainder)
+        tracing::info!("No REDIS_URL set, using in-memory store");
+        Store::Memory(store::MemoryStore::new())
     }
-}
-
-pub fn calc_next_update() -> u64 {
-    let last_updated = LAST_UPDATED.lock();
-    let elapsed = last_updated.elapsed().as_secs();
-    CONFIG.update_seconds.saturating_sub(elapsed)
-}
+});
 
 include!(concat!(env!("OUT_DIR"), "/prices_map.rs"));
 
-// Honestly there should be a better way to do this in a more memory efficient way i think?
-pub static AUCTIONS: Lazy<Mutex<BTreeMap<String, u64>>> = Lazy::new(|| {
-    let mut res: BTreeMap<String, u64> = fs::read("auctions.json")
-        .map(|x| serde_json::from_slice(&x).unwrap())
-        .unwrap_or_default();
-    res.extend(HashMap::from(get_prices_map()));
-    Mutex::new(res)
-});
+pub async fn calc_next_update() -> u64 {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    let last = STORE.get_last_updated().await.unwrap_or(0);
+    if last == 0 {
+        return CONFIG.update_seconds;
+    }
+    let elapsed = now.saturating_sub(last);
+    CONFIG.update_seconds.saturating_sub(elapsed)
+}
+
+pub fn round_to_nearest_15(value: u64) -> u64 {
+    ((value + 7) / 15 * 15).max(15)
+}
