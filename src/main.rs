@@ -70,7 +70,7 @@ fn main() -> Result<()> {
 
     let res = format!(
         "Loaded {} auctions from save\nMade by Tricked-dev - source: {SOURCE}\nOverwrites {:?}, Save To Disk: {}, Update Seconds: {}",
-        AUCTIONS.lock().len(),
+        AUCTIONS.lock().historical_auctions.len(),
         &CONFIG.overwrites,
         &CONFIG.save_to_disk,
         &CONFIG.update_seconds,
@@ -87,7 +87,7 @@ fn main() -> Result<()> {
                 if !AUCTIONS.is_locked() {
                     match fs::write(
                         "auctions.json",
-                        serde_json::to_string_pretty(&*AUCTIONS.lock()).unwrap(),
+                        serde_json::to_string_pretty(&AUCTIONS.lock().historical_auctions).unwrap(),
                     ) {
                         Ok(_) => tracing::debug!("Saved to disk"),
                         Err(_) => tracing::error!(

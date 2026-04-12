@@ -9,7 +9,7 @@ use parking_lot::{Mutex, RwLock};
 use serde::{ser::SerializeMap, Deserialize, Serialize};
 use tokio::task;
 
-const DAY_SLOTS: usize = 7;
+pub(crate) const DAY_SLOTS: usize = 7;
 const PERSIST_PATH: &str = "history.json";
 
 fn now_secs() -> u64 {
@@ -31,9 +31,9 @@ fn day_start_of(ts: u64) -> u64 {
 struct PersistData {
     day_acc_start: u64,
     // (item_id -> (sum, count)) for the partial current day
-    day_acc: HashMap<String, (u64, u32)>,
+    day_acc: HashMap<String, (f64, u32)>,
     // (day_start_ts, item_id -> (sum, count)) for completed days
-    day_slots: Vec<(u64, HashMap<String, (u64, u32)>)>,
+    day_slots: Vec<(u64, HashMap<String, (f64, u32)>)>,
 }
 
 struct PriceHistory {
@@ -42,12 +42,12 @@ struct PriceHistory {
 
     // Running accumulator for the current calendar day
     day_acc_start: u64,
-    day_acc_sum: Vec<u64>,
+    day_acc_sum: Vec<f64>,
     day_acc_count: Vec<u32>,
 
     // Up to 7 completed calendar days
     // Each entry: (day_start_ts, price_sum_per_item, snapshot_count_per_item)
-    day_slots: VecDeque<(u64, Vec<u64>, Vec<u32>)>,
+    day_slots: VecDeque<(u64, Vec<f64>, Vec<u32>)>,
 }
 
 impl PriceHistory {
@@ -93,7 +93,7 @@ impl PriceHistory {
 
         let n = items.len();
 
-        let mut day_acc_sum = vec![0u64; n];
+        let mut day_acc_sum = vec![0.0; n];
         let mut day_acc_count = vec![0u32; n];
         for (key, (sum, count)) in &p.day_acc {
             if let Some(&idx) = item_index.get(key) {
@@ -106,7 +106,7 @@ impl PriceHistory {
             .day_slots
             .into_iter()
             .map(|(ts, map)| {
-                let mut sum = vec![0u64; n];
+                let mut sum = vec![0.0; n];
                 let mut count = vec![0u32; n];
                 for (key, (s, c)) in map {
                     if let Some(&idx) = item_index.get(&key) {
@@ -143,10 +143,10 @@ impl PriceHistory {
         let idx = self.items.len();
         self.item_index.insert(key.to_owned(), idx);
         self.items.push(key.to_owned());
-        self.day_acc_sum.push(0);
+        self.day_acc_sum.push(0.0);
         self.day_acc_count.push(0);
         for (_, sum, count) in &mut self.day_slots {
-            sum.push(0);
+            sum.push(0.0);
             count.push(0);
         }
         idx
@@ -154,7 +154,7 @@ impl PriceHistory {
 
     pub fn push_snapshot<I>(&mut self, prices: I)
     where
-        I: IntoIterator<Item = (String, u64)>,
+        I: IntoIterator<Item = (String, f64)>,
     {
         let ts = now_secs();
         let current_day = day_start_of(ts);
@@ -162,7 +162,7 @@ impl PriceHistory {
         // Day rollover: finalize the current accumulator into a completed day slot
         if current_day != self.day_acc_start {
             let n = self.items.len();
-            let sum = std::mem::replace(&mut self.day_acc_sum, vec![0u64; n]);
+            let sum = std::mem::replace(&mut self.day_acc_sum, vec![0.0; n]);
             let count = std::mem::replace(&mut self.day_acc_count, vec![0u32; n]);
             self.day_slots.push_back((self.day_acc_start, sum, count));
             // Maintain sliding window by removing the oldest day slot
@@ -174,6 +174,8 @@ impl PriceHistory {
 
         for (key, price) in prices {
             let idx = self.ensure_item(&key);
+            // Only items present in the snapshot contribute to the daily average.
+            // Absent items (e.g., price <= 0.0 in fetch) are ignored, maintaining average integrity.
             self.day_acc_sum[idx] += price;
             self.day_acc_count[idx] += 1;
         }
@@ -223,7 +225,7 @@ impl<'a> Serialize for AverageView<'a> {
         S: serde::Serializer,
     {
         let n = self.history.items.len();
-        let mut sum = vec![0u64; n];
+        let mut sum = vec![0.0; n];
         let mut count = vec![0u32; n];
 
         // Process current partial day accumulator
@@ -255,7 +257,7 @@ impl<'a> Serialize for AverageView<'a> {
         //  Stream calculations directly to the serializer
         for i in 0..n {
             if count[i] > 0 {
-                map.serialize_entry(&self.history.items[i], &(sum[i] / count[i] as u64))?;
+                map.serialize_entry(&self.history.items[i], &(sum[i] / count[i] as f64))?;
             }
         }
 
@@ -274,7 +276,7 @@ pub fn get_cache(days: u8) -> Option<Bytes> {
 /// Accept any iterator that yields (String, u64) to avoid unnecessary collection conversions.
 pub fn update_history<I>(prices: I)
 where
-    I: IntoIterator<Item = (String, u64)> + Send + 'static,
+    I: IntoIterator<Item = (String, f64)> + Send + 'static,
 {
     if !crate::CONFIG.enable_history {
         return;

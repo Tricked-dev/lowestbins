@@ -8,6 +8,7 @@ use crate::{
     webhook::*,
     AUCTIONS, CONFIG,
 };
+use std::collections::BTreeMap;
 
 use dashmap::DashMap;
 use futures_util::{stream::FuturesUnordered, FutureExt, StreamExt};
@@ -19,10 +20,11 @@ pub mod bazaar;
 pub mod util;
 
 pub async fn fetch_auctions() -> Result<()> {
-    let start = std::time::Instant::now();
+    let start = Instant::now();
     let hs = get_auctions_page(0).await?;
 
     let auctions: DashMap<String, u64> = DashMap::new();
+    let bazaar: DashMap<String, f64> = DashMap::new();
     parse_auctions(hs.auctions, &auctions)?;
 
     let futures = FuturesUnordered::new();
@@ -30,18 +32,24 @@ pub async fn fetch_auctions() -> Result<()> {
     for url in 1..hs.total_pages {
         futures.push(get_auctions(url, &auctions).boxed());
     }
-    futures.push(get_bazaar_products(&auctions).boxed());
+    futures.push(get_bazaar_products(&bazaar).boxed());
 
     let _: Vec<_> = futures.collect().await;
-    let fetched = auctions.len();
+    let fetched = auctions.len() + bazaar.len();
     let fetch_time = n.elapsed();
 
-    let mut new_auctions = DashMap::new();
-    new_auctions.extend(auctions.clone());
-    drop(auctions);
+    let mut new_auctions = BTreeMap::new();
+    for kv in auctions.into_iter() {
+        new_auctions.insert(kv.0, kv.1);
+    }
     new_auctions.extend(CONFIG.overwrites.clone());
 
-    tracing::debug!("Fetched {} auctions in {:?}", fetched, fetch_time);
+    let mut new_bazaar = BTreeMap::new();
+    for kv in bazaar.into_iter() {
+        new_bazaar.insert(kv.0, kv.1);
+    }
+
+    tracing::debug!("Fetched {} items in {:?}", fetched, fetch_time);
     // It only sends if the WEBHOOK_URL env var is set
     send_embed(Message::new(
         "Auctions updated".to_owned(),
@@ -59,11 +67,23 @@ pub async fn fetch_auctions() -> Result<()> {
 
     let snapshot = {
         let mut auc = AUCTIONS.lock();
-        auc.extend(new_auctions);
+        auc.available_auctions = new_auctions.clone();
+        auc.historical_auctions.extend(new_auctions);
+        auc.bazaar = new_bazaar;
+
+        let mut combined: BTreeMap<String, f64> = BTreeMap::new();
+        for (k, v) in &auc.available_auctions {
+            combined.insert(k.clone(), *v as f64);
+        }
+        for (k, v) in &auc.bazaar {
+            combined.insert(k.clone(), *v);
+        }
+
         set_last_updates();
-        auc.clone()
+        combined
     };
     crate::history::update_history(snapshot);
+    crate::server::clear_response_cache();
 
     Ok(())
 }

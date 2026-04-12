@@ -61,13 +61,20 @@ print(json["ENCHANTMENT_ULTIMATE_SWARM_2"])
 
 ### Api endpoints
 
-#### `/lowestbins` | `/lowestbins.json` | `/auctions/lowestbins`
+#### `/lowestbins` | `/lowestbins.json`
 
-> Returns a json object with all lowestbins
+> Returns a JSON object with lowest bins and bazaar prices. Supports `?type` and `?price` filters.
 
 #### `/averages/{1-7}day`
 
 > Returns the historical price average for the specified number of days (e.g., `/averages/7day`). Requires `ENABLE_HISTORY=1`.
+
+> **Note on Compression:** All endpoints support robust Gzip compression to save bandwidth. Just append `.gz` to the path (e.g., `/lowestbins.json.gz`, `/averages/1day.json.gz`).
+
+> **Query Parameters:**
+> Most data endpoints support the following filters:
+> - `?type=all|auction|bazaar` (Default: `all`) - Filters items by their market source.
+> - `?price=historical|available` (Default: `historical`) - Filters auction items by their state (`available` means currently active on the Auction House).
 
 #### Special handling
 
@@ -134,6 +141,8 @@ ENABLE_HISTORY # set to 1 to enable historical price tracking (default: 0)
 - metrics endpoint `/metrics`
 - rust
 - price history
+- granular filtering (`?type` & `?price`)
+- gzip compression
 
 ## Todo
 
