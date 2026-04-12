@@ -67,20 +67,16 @@ pub async fn fetch_auctions() -> Result<()> {
 
     let snapshot = {
         let mut auc = AUCTIONS.lock();
+        for k in new_bazaar.keys() {
+            auc.historical_auctions.remove(k);
+        }
         auc.available_auctions = new_auctions.clone();
         auc.historical_auctions.extend(new_auctions);
         auc.bazaar = new_bazaar;
 
-        let mut combined: BTreeMap<String, f64> = BTreeMap::new();
-        for (k, v) in &auc.available_auctions {
-            combined.insert(k.clone(), *v as f64);
-        }
-        for (k, v) in &auc.bazaar {
-            combined.insert(k.clone(), *v);
-        }
-
         set_last_updates();
-        combined
+
+        auc.build_combined_map(crate::FilterType::All, crate::FilterPrice::Available)
     };
     crate::history::update_history(snapshot);
     crate::server::clear_response_cache();

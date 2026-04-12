@@ -36,7 +36,8 @@ impl Product {
                 .iter()
                 .map(|s| s.price_per_unit)
                 .filter(|p| p.is_finite())
-                .fold(f64::MAX, f64::min),
+                .reduce(f64::min)
+                .unwrap_or(0.0),
         }
     }
 }

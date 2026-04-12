@@ -11,9 +11,9 @@ use once_cell::sync::Lazy;
 use parking_lot::RwLock;
 use serde_json::json;
 use std::collections::HashMap;
+use std::fmt::Write as FmtWrite;
 use std::io::Write;
-
-use crate::{calc_next_update, error::Result, history, round_to_nearest_15, AUCTIONS, CONFIG, SOURCE, SPONSOR};
+use crate::{calc_next_update, error::Result, history, round_to_nearest_15, FilterPrice, FilterType, AUCTIONS, CONFIG, SOURCE, SPONSOR};
 
 // Standard JSON response for 404 Not Found errors
 static NOTFOUND: &[u8] = b"{\"error\": \"not found\"}";
@@ -77,25 +77,21 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
     }
 
     let uri_path = req.uri().path();
+    let no_trailing = uri_path.strip_suffix('/').unwrap_or(uri_path);
     let query = req.uri().query().unwrap_or("");
 
     // Safely identify and strip the .gz suffix if present
-    let is_gzip = uri_path.ends_with(".gz");
-    let unzipped_path = if is_gzip {
-        uri_path.strip_suffix(".gz").unwrap_or(uri_path)
+    let is_gzip = no_trailing.ends_with(".gz") && !no_trailing.ends_with("/.gz");
+    let clean_path = if is_gzip {
+        no_trailing.strip_suffix(".gz").unwrap_or(no_trailing)
     } else {
-        uri_path
-    };
-
-    // Strip trailing slash (excluding the root path itself)
-    let clean_path = if unzipped_path != "/" {
-        unzipped_path.strip_suffix('/').unwrap_or(unzipped_path)
-    } else {
-        unzipped_path
+        no_trailing
     };
 
     // Split the route from the parameter to preserve case-sensitivity for item IDs
-    let (route_base, path_param) = if let Some(idx) = clean_path[1..].find('/') {
+    let (route_base, path_param) = if clean_path.is_empty() {
+        ("", None)
+    } else if let Some(idx) = clean_path[1..].find('/') {
         let split_idx = idx + 1;
         (&clean_path[..split_idx], Some(&clean_path[split_idx + 1..]))
     } else {
@@ -128,8 +124,8 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
         "{}:{}:{}:{}:{}",
         route_str,
         path_param.unwrap_or(""),
-        q_type,
-        q_price,
+        q_type as u8,
+        q_price as u8,
         is_gzip
     );
 
@@ -140,6 +136,7 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
         let base_param = param.strip_suffix(".json").unwrap_or(param);
         let days_str = base_param.strip_suffix("day").unwrap_or("");
 
+        #[allow(clippy::collapsible_if)]
         if let Ok(days) = days_str.parse::<usize>() {
             if (1..=history::DAY_SLOTS).contains(&days) {
                 return if let Some(bytes) = history::get_cache(days as u8) {
@@ -165,6 +162,7 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
     }
 
     // Check pre-computed cache for heavy endpoints
+    #[allow(clippy::collapsible_if)]
     if route_str == "/lowestbins" || route_str == "/lowestbins.json" || route_str == "/lowestbins.txt" {
         if let Some(cached_data) = RESPONSE_CACHE.read().get(&cache_key) {
             if req.method() == Method::HEAD {
@@ -178,25 +176,21 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
         return Ok(resp.body(Body::empty())?);
     }
 
-    let raw_bytes: Vec<u8> = match route_str {
-        "/lowestbins" | "/lowestbins.json" => {
+    let raw_bytes: Vec<u8> = match (route_str, path_param) {
+        ("/lowestbins" | "/lowestbins.json", None) => {
             let map = AUCTIONS.lock().build_combined_map(q_type, q_price);
             serde_json::to_vec(&map)?
         }
-        "/lowestbins.txt" => {
+        ("/lowestbins.txt", None) => {
             let auc = AUCTIONS.lock();
             // approximately 30 characters per line
             let mut res = String::with_capacity(auc.historical_auctions.len() * 30);
            auc.for_each_price(q_type, q_price, |key, value| {
-                res.push_str(key);
-                res.push(' ');
-                res.push_str(&value.to_string());
-                res.push('\n');
+               let _ = writeln!(res, "{} {}", key, value);
             });
             res.into_bytes()
         }
-        "/auction" | "/lowestbin" => {
-            let param = path_param.unwrap_or("");
+        ("/auction" | "/lowestbin", Some(param)) => {
             let id = param.strip_suffix(".json").unwrap_or(param);
 
             if let Some(price) = AUCTIONS.lock().get_price(id, q_type, q_price) {
@@ -205,20 +199,21 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
                 return Ok(not_found());
             }
         }
-        "/metrics" => {
+        ("/metrics", None) => {
             let auc = AUCTIONS.lock();
             let mut res = String::with_capacity(auc.historical_auctions.len() * 90);
             res.push_str("# HELP price Price of each item\n# TYPE price gauge\n");
-            auc.for_each_price("all", "historical", |item, price| {
+            auc.for_each_price(FilterType::All, FilterPrice::Historical, |item, price| {
                 let display_name = to_display_name(item);
-                res.push_str(&format!(
-                    "lowestbin_price{{item=\"{}\", display=\"{}\"}} {}\n",
+                let _ = writeln!(
+                    res,
+                    "lowestbin_price{{item=\"{}\", display=\"{}\"}} {}",
                     item, display_name, price
-                ));
+                );
             });
             res.into_bytes()
         }
-        "/" | "" => {
+        ("/" | "", None) => {
             let mut endpoints = vec!["/lowestbins.json".to_owned(), "/lowestbins.txt".to_owned()];
             if CONFIG.enable_history {
                 for days in 1..=history::DAY_SLOTS {
@@ -270,20 +265,24 @@ fn not_found() -> Response<Body> {
 }
 
 // Helper for strict query parsing
-fn parse_query(query: &str) -> (&'static str, &'static str) {
-    let (mut t, mut p) = ("all", "historical");
+fn parse_query(query: &str) -> (FilterType, FilterPrice) {
+    let mut t = FilterType::All;
+    let mut p = FilterPrice::Historical;
+
     for param in query.split('&') {
-        match param.split_once('=') {
-            Some(("type", v)) => t = match v {
-                "auction" => "auction",
-                "bazaar" => "bazaar",
-                _ => "all"
-            },
-            Some(("price", v)) => p = match v {
-                "available" => "available",
-                _ => "historical"
-            },
-            _ => {}
+        if let Some((key, value)) = param.split_once('=') {
+            match key {
+                "type" => t = match value {
+                    "auction" => FilterType::Auction,
+                    "bazaar" => FilterType::Bazaar,
+                    _ => FilterType::All,
+                },
+                "price" => p = match value {
+                    "available" => FilterPrice::Available,
+                    _ => FilterPrice::Historical,
+                },
+                _ => {}
+            }
         }
     }
     (t, p)
