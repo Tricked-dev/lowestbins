@@ -273,14 +273,13 @@ fn not_found() -> Response<Body> {
 fn parse_query(query: &str) -> (&'static str, &'static str) {
     let (mut t, mut p) = ("all", "historical");
     for param in query.split('&') {
-        let mut parts = param.splitn(2, '=');
-        match (parts.next(), parts.next()) {
-            (Some("type"), Some(v)) => t = match v {
+        match param.split_once('=') {
+            Some(("type", v)) => t = match v {
                 "auction" => "auction",
                 "bazaar" => "bazaar",
                 _ => "all"
             },
-            (Some("price"), Some(v)) => p = match v {
+            Some(("price", v)) => p = match v {
                 "available" => "available",
                 _ => "historical"
             },
