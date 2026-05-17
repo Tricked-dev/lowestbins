@@ -48,6 +48,7 @@
               pkg-config
               rustToolchain
               curl
+              nukeReferences
             ];
 
             buildInputs = with pkgs; [
@@ -55,6 +56,23 @@
             ];
 
             RUSTFLAGS = "--cfg reqwest_unstable";
+
+            # cargo embeds absolute /nix/store/...-rust-default-X paths
+            # for the rust-stdlib source files (panic-info, file!() macros)
+            # into release binaries. The nix runtime-reference scanner
+            # picks those up and pulls the whole nightly rust toolchain
+            # (~4 GiB) into any closure that contains lowestbins. Replace
+            # those refs with placeholder paths; keep only the libs we
+            # actually link to at runtime.
+            postFixup = ''
+              for f in $out/bin/*; do
+                nuke-refs \
+                  -e ${pkgs.glibc} \
+                  -e ${pkgs.gcc-unwrapped.lib} \
+                  -e ${pkgs.openssl.out} \
+                  "$f"
+              done
+            '';
 
             postInstall = null;
           };
