@@ -1,113 +1,135 @@
 {
-  description = "A Discord bot made for my discord server";
+  description = "Lowestbins made in Rust";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     rust-overlay.url = "github:oxalica/rust-overlay";
     flake-utils.url = "github:numtide/flake-utils";
+    crane.url = "github:ipetkov/crane";
   };
 
   outputs =
     {
-      self,
       nixpkgs,
       rust-overlay,
       flake-utils,
+      crane,
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs {
-          inherit system overlays;
+          inherit system;
+          overlays = [ (import rust-overlay) ];
         };
-        rustToolchain = pkgs.rust-bin.nightly.latest.default.override {
+        inherit (pkgs) lib;
+
+        manifest = lib.importTOML ./Cargo.toml;
+        rustToolchain = pkgs.rust-bin.nightly.latest.minimal;
+        craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
+        src = craneLib.cleanCargoSource ./.;
+
+        commonArgs = {
+          inherit src;
+          pname = manifest.package.name;
+          version = manifest.package.version;
+          strictDeps = true;
+
+          RUSTFLAGS = "--cfg reqwest_unstable";
+          CARGO_PROFILE_RELEASE_INCREMENTAL = "false";
+
+          nativeBuildInputs = with pkgs; [
+            pkg-config
+            curl
+          ];
+
+          buildInputs = with pkgs; [
+            openssl
+          ];
+        };
+
+        cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+
+        lowestbins = craneLib.buildPackage (
+          commonArgs
+          // {
+            inherit cargoArtifacts;
+
+            nativeBuildInputs = commonArgs.nativeBuildInputs ++ [ pkgs.removeReferencesTo ];
+
+            postFixup = ''
+              for bin in "$out"/bin/*; do
+                remove-references-to -t ${rustToolchain} "$bin"
+              done
+            '';
+
+            meta = {
+              inherit (manifest.package) description;
+              homepage = manifest.package.homepage;
+              license = lib.licenses.asl20;
+              mainProgram = "lowestbins";
+            };
+          }
+        );
+
+        app = {
+          type = "app";
+          program = lib.getExe lowestbins;
+        };
+
+        rustDevToolchain = pkgs.rust-bin.nightly.latest.default.override {
           extensions = [
             "rust-src"
             "rust-analyzer"
             "clippy"
-            "rustc-dev"
-            "llvm-tools-preview"
           ];
         };
       in
       {
         packages = {
-          default = self.packages.${system}.lowestbins;
-
-          lowestbins = pkgs.rustPlatform.buildRustPackage {
-            pname = "lowestbins";
-            version = "1.4.0";
-
-            src = ./.;
-
-            cargoLock.lockFile = ./Cargo.lock;
-
-            nativeBuildInputs = with pkgs; [
-              pkg-config
-              rustToolchain
-              curl
-              nukeReferences
-            ];
-
-            buildInputs = with pkgs; [
-              openssl
-            ];
-
-            RUSTFLAGS = "--cfg reqwest_unstable";
-
-            # cargo embeds absolute /nix/store/...-rust-default-X paths
-            # for the rust-stdlib source files (panic-info, file!() macros)
-            # into release binaries. The nix runtime-reference scanner
-            # picks those up and pulls the whole nightly rust toolchain
-            # (~4 GiB) into any closure that contains lowestbins. Replace
-            # those refs with placeholder paths; keep only the libs we
-            # actually link to at runtime.
-            postFixup = ''
-              for f in $out/bin/*; do
-                nuke-refs \
-                  -e ${pkgs.glibc} \
-                  -e ${pkgs.gcc-unwrapped.lib} \
-                  -e ${pkgs.openssl.out} \
-                  "$f"
-              done
-            '';
-
-            postInstall = null;
-          };
+          default = lowestbins;
+          inherit lowestbins;
         };
 
-        devShells.default =
-          with pkgs;
-          mkShell {
-            buildInputs = [
-              openssl
-              pkg-config
-              eza
-              fd
-              clang
-              mold
-              rustToolchain
-              ffmpeg
-              libqalculate
-            ];
+        apps = {
+          default = app;
+          lowestbins = app;
+        };
 
-            LD_LIBRARY_PATH = lib.makeLibraryPath [ openssl ];
+        checks.default = lowestbins;
 
-            shellHook = ''
-              export RUSTFLAGS='--cfg reqwest_unstable'
-              export PORT=8081
-              export ENABLE_HISTORY=1
-              export SAVE_TO_DISK=1
-              if [ -f .env ]; then
-                set -a
-                source .env
-                set +a
-                echo "Loaded environment variables from .env"
-              fi
-            '';
-          };
+        devShells.default = pkgs.mkShell {
+          packages = with pkgs; [
+            rustDevToolchain
+            openssl
+            pkg-config
+            eza
+            fd
+            clang
+            mold
+            ffmpeg
+            libqalculate
+            nixfmt-rfc-style
+          ];
+
+          LD_LIBRARY_PATH = lib.makeLibraryPath [ pkgs.openssl ];
+          RUSTFLAGS = "--cfg reqwest_unstable";
+
+          shellHook = ''
+            export PORT=8081
+            export ENABLE_HISTORY=1
+            export SAVE_TO_DISK=1
+            if [ -f .env ]; then
+              set -a
+              source .env
+              set +a
+              echo "Loaded environment variables from .env"
+            fi
+          '';
+        };
+
+        formatter = pkgs.nixfmt-rfc-style;
       }
     );
 }
