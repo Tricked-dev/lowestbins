@@ -28,7 +28,18 @@
         manifest = lib.importTOML ./Cargo.toml;
         rustToolchain = pkgs.rust-bin.nightly.latest.minimal;
         craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
-        src = craneLib.cleanCargoSource ./.;
+        # cleanCargoSource alone drops README.md (src/lib.rs doc-includes it)
+        # and resources/ (test + bench fixtures).
+        src = lib.cleanSourceWith {
+          name = "source";
+          src = ./.;
+          filter =
+            path: type:
+            craneLib.filterCargoSources path type
+            || lib.hasSuffix "/README.md" path
+            || lib.hasSuffix "/resources" path
+            || lib.hasInfix "/resources/" path;
+        };
 
         commonArgs = {
           inherit src;
