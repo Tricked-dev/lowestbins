@@ -24,8 +24,9 @@ Lowestbins-rs is used by [Skytils](https://github.com/Skytils/SkytilsMod) for th
 ## Hosted Instance
 
 - [lb.tricked.dev/](https://lb.tricked.dev/)
+- [lb.noamm.org/](https://lb.noamm.org/)
 
-If you are using this in a project please credit me! or sponsor me on github [github.com/sponsors/Tricked-dev](https://github.com/sponsors/Tricked-dev)
+If you are using this in a project please credit me!
 
 ## Using in your code
 
@@ -146,7 +147,7 @@ ENABLE_HISTORY # set to 1 to enable historical price tracking (default: 0)
 
 ## Todo
 
-- use quiche for faster quests
+- use quiche for faster requests
 - use cargo pgo to optimize binaries
 
 > Licensed under the [Apache 2](./LICENSE) License
