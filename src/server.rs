@@ -1,19 +1,19 @@
-use flate2::write::GzEncoder;
-use flate2::Compression;
+use crate::{
+    AUCTIONS, CONFIG, FilterPrice, FilterType, SOURCE, SPONSOR, calc_next_update, error::Result, history,
+    round_to_nearest_15,
+};
+use flate2::{Compression, write::GzEncoder};
 use hyper::{
+    Body, Method, Request, Response, Server,
     body::Bytes,
     header,
     http::response,
     service::{make_service_fn, service_fn},
-    Body, Method, Request, Response, Server,
 };
 use once_cell::sync::Lazy;
 use parking_lot::RwLock;
 use serde_json::json;
-use std::collections::HashMap;
-use std::fmt::Write as FmtWrite;
-use std::io::Write;
-use crate::{calc_next_update, error::Result, history, round_to_nearest_15, FilterPrice, FilterType, AUCTIONS, CONFIG, SOURCE, SPONSOR};
+use std::{collections::HashMap, fmt::Write as FmtWrite, io::Write};
 
 // Standard JSON response for 404 Not Found errors
 static NOTFOUND: &[u8] = b"{\"error\": \"not found\"}";
@@ -57,10 +57,7 @@ fn response_base() -> response::Builder {
 
 /// Compresses a byte slice using standard Gzip (DEFLATE) algorithm
 fn gzip_bytes(data: &[u8]) -> Result<Bytes> {
-    let mut encoder = GzEncoder::new(
-        Vec::with_capacity(data.len() / 3),
-        Compression::default()
-    );
+    let mut encoder = GzEncoder::new(Vec::with_capacity(data.len() / 3), Compression::default());
     encoder.write_all(data)?;
     Ok(Bytes::from(encoder.finish()?))
 }
@@ -117,6 +114,9 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
     };
     let mut resp = response_base().header(header::CONTENT_TYPE, content_type);
 
+    let cacheable = matches!(route_str, "/lowestbins" | "/lowestbins.json" | "/lowestbins.txt")
+        || (route_str == "/bazaar" && path_param == Some("prices"));
+
     let (q_type, q_price) = parse_query(query);
 
     // Construct a canonical cache key incorporating all variables to prevent cache collisions
@@ -144,18 +144,16 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
                         return Ok(resp.body(Body::empty())?);
                     }
 
-                    let final_data = if is_gzip {
-                        gzip_bytes(&bytes)?
-                    } else {
-                        bytes.clone()
-                    };
+                    let final_data = if is_gzip { gzip_bytes(&bytes)? } else { bytes.clone() };
                     Ok(resp.body(Body::from(final_data))?)
                 } else {
                     Ok(response_base()
                         .header(header::CONTENT_TYPE, "application/json")
                         .status(503)
-                        .body(Body::from(r#"{"error": "History cache is currently building. Please try again in a moment."}"#))?)
-                }
+                        .body(Body::from(
+                            r#"{"error": "History cache is currently building. Please try again in a moment."}"#,
+                        ))?)
+                };
             }
         }
         return Ok(not_found());
@@ -163,7 +161,7 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
 
     // Check pre-computed cache for heavy endpoints
     #[allow(clippy::collapsible_if)]
-    if route_str == "/lowestbins" || route_str == "/lowestbins.json" || route_str == "/lowestbins.txt" {
+    if cacheable {
         if let Some(cached_data) = RESPONSE_CACHE.read().get(&cache_key) {
             if req.method() == Method::HEAD {
                 return Ok(resp.body(Body::empty())?);
@@ -185,8 +183,8 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
             let auc = AUCTIONS.lock();
             // approximately 30 characters per line
             let mut res = String::with_capacity(auc.historical_auctions.len() * 30);
-           auc.for_each_price(q_type, q_price, |key, value| {
-               let _ = writeln!(res, "{} {}", key, value);
+            auc.for_each_price(q_type, q_price, |key, value| {
+                let _ = writeln!(res, "{} {}", key, value);
             });
             res.into_bytes()
         }
@@ -198,6 +196,23 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
             } else {
                 return Ok(not_found());
             }
+        }
+        ("/bazaar", Some("prices")) => {
+            let auc = AUCTIONS.lock();
+
+            if auc.bazaar_updated_at.is_none() {
+                return Ok(Response::builder()
+                    .status(503)
+                    .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .header(header::CACHE_CONTROL, "no-store")
+                    .body(Body::from(r#"{"error":"Bazaar prices not ready"}"#))?);
+            }
+            serde_json::to_vec(&json!({
+                "updatedAt": auc.bazaar_updated_at,
+                "instantBuy": &auc.bazaar_instant_buy,
+                "instantSell": &auc.bazaar_instant_sell,
+            }))?
         }
         ("/metrics", None) => {
             let auc = AUCTIONS.lock();
@@ -215,6 +230,7 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
         }
         ("/" | "", None) => {
             let mut endpoints = vec!["/lowestbins.json".to_owned(), "/lowestbins.txt".to_owned()];
+            endpoints.push("/bazaar/prices".to_owned());
             if CONFIG.enable_history {
                 for days in 1..=history::DAY_SLOTS {
                     endpoints.push(format!("/averages/{}day.json", days));
@@ -248,7 +264,7 @@ async fn response(req: Request<Body>) -> Result<Response<Body>> {
     };
 
     // Save only heavy endpoints to cache
-    if route_str == "/lowestbins" || route_str == "/lowestbins.json" || route_str == "/lowestbins.txt" {
+    if cacheable {
         RESPONSE_CACHE.write().insert(cache_key, final_data.clone());
     }
 
@@ -272,15 +288,19 @@ fn parse_query(query: &str) -> (FilterType, FilterPrice) {
     for param in query.split('&') {
         if let Some((key, value)) = param.split_once('=') {
             match key {
-                "type" => t = match value {
-                    "auction" => FilterType::Auction,
-                    "bazaar" => FilterType::Bazaar,
-                    _ => FilterType::All,
-                },
-                "price" => p = match value {
-                    "available" => FilterPrice::Available,
-                    _ => FilterPrice::Historical,
-                },
+                "type" => {
+                    t = match value {
+                        "auction" => FilterType::Auction,
+                        "bazaar" => FilterType::Bazaar,
+                        _ => FilterType::All,
+                    }
+                }
+                "price" => {
+                    p = match value {
+                        "available" => FilterPrice::Available,
+                        _ => FilterPrice::Historical,
+                    }
+                }
                 _ => {}
             }
         }

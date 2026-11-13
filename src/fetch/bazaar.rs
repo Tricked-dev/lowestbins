@@ -9,6 +9,12 @@ use super::util::get_path;
 
 #[derive(Deserialize, Debug)]
 pub struct BazaarResponse {
+    #[serde(default)]
+    pub success: bool,
+
+    #[serde(rename = "lastUpdated", default)]
+    pub last_updated: Option<u64>,
+
     #[serde(rename = "products")]
     pub products: HashMap<String, Product>,
 }
@@ -17,6 +23,9 @@ pub struct BazaarResponse {
 pub struct Product {
     #[serde(rename = "buy_summary")]
     pub buy_summary: Vec<SummaryEntry>,
+
+    #[serde(default)]
+    pub quick_status: Option<QuickStatus>,
 }
 
 impl Product {
@@ -26,11 +35,7 @@ impl Product {
             [] => 0.0,
             [single] => {
                 let p = single.price_per_unit;
-                if p.is_finite() {
-                    p
-                } else {
-                    0.0
-                }
+                if p.is_finite() { p } else { 0.0 }
             }
             entries => entries
                 .iter()
@@ -40,6 +45,27 @@ impl Product {
                 .unwrap_or(0.0),
         }
     }
+
+    pub fn instant_sell_price(&self) -> Option<f64> {
+        self.quick_status
+            .as_ref()?
+            .buy_price
+            .filter(|price| price.is_finite() && *price > 0.0)
+    }
+
+    pub fn instant_buy_price(&self) -> Option<f64> {
+        self.quick_status
+            .as_ref()?
+            .sell_price
+            .filter(|price| price.is_finite() && *price > 0.0)
+    }
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct QuickStatus {
+    pub buy_price: Option<f64>,
+    pub sell_price: Option<f64>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -52,31 +78,42 @@ pub async fn get_bazaar() -> Result<BazaarResponse> {
     get_path("bazaar").await
 }
 
-pub async fn get_bazaar_products(bazaar_map: &DashMap<String, f64>) -> Result<()> {
-    let bz = get_path::<BazaarResponse>("bazaar").await?;
-    let prods = bz.products;
+pub async fn get_bazaar_products(
+    bazaar_map: &DashMap<String, f64>,
+    instant_buy: &DashMap<String, f64>,
+    instant_sell: &DashMap<String, f64>,
+) -> Result<Option<u64>> {
+    let bz = get_bazaar().await?;
 
-    for (mut key, val) in prods.into_iter() {
-        let price = val.lowest_buy_price();
-        // Skip items with no buy orders or invalid prices.
-        // This also protects history.rs from tanking averages with 0.0 values,
-        // as the item will be absent from the snapshot and won't increment the counter.
-        if price <= 0.0 {
-            continue;
+    anyhow::ensure!(bz.success && !bz.products.is_empty(), "Invalid Bazaar response");
+
+    for (mut key, product) in bz.products {
+        // preserve naming conv.
+        if let Some(rest) = key.strip_prefix("ENCHANTMENT_") {
+            if let Some((name, level)) = rest.rsplit_once('_') {
+                key = format!("ENCHANTED_BOOK-{name}-{level}");
+            }
         }
 
-        if key.starts_with("ENCHANTMENT") {
-            let mut split = key.split('_');
-            split.next();
-
-            let parts: Vec<&str> = split.collect();
-
-            let (name_parts, level) = parts.split_at(parts.len() - 1);
-
-            key = format!("ENCHANTED_BOOK-{}-{}", name_parts.join("_"), level[0]);
+        if let Some(price) = product.instant_buy_price() {
+            instant_buy.insert(key.clone(), price);
         }
 
-        bazaar_map.insert(key, price);
+        if let Some(price) = product.instant_sell_price() {
+            instant_sell.insert(key.clone(), price);
+        }
+
+        let price = product.lowest_buy_price();
+
+        if price > 0.0 {
+            bazaar_map.insert(key, price);
+        }
     }
-    Ok(())
+
+    anyhow::ensure!(
+        !bazaar_map.is_empty() && !instant_sell.is_empty(),
+        "Empty Bazaar snapshot"
+    );
+
+    Ok(bz.last_updated)
 }

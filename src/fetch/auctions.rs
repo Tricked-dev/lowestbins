@@ -55,11 +55,12 @@ pub fn parse_auctions(auctions: Vec<Item>, map: &DashMap<String, u64>) -> Result
                 }
                 "RUNE" => {
                     if let Some(x) = &nbt.tag.extra_attributes.runes
-                        && x.len() == 1 {
-                            for (key, val) in x.iter() {
-                                id = format!("RUNE-{}-{}", key.to_ascii_uppercase(), val);
-                            }
+                        && x.len() == 1
+                    {
+                        for (key, val) in x.iter() {
+                            id = format!("RUNE-{}-{}", key.to_ascii_uppercase(), val);
                         }
+                    }
                 }
                 "NEW_YEAR_CAKE" => {
                     if let Some(cake_year) = &nbt.tag.extra_attributes.new_years_cake {
@@ -77,9 +78,10 @@ pub fn parse_auctions(auctions: Vec<Item>, map: &DashMap<String, u64>) -> Result
 
             let r = map.get(&id);
             if let Some(x) = r
-                && *x < price {
-                    continue;
-                }
+                && *x < price
+            {
+                continue;
+            }
             map.insert(id, price);
         }
     }
@@ -98,9 +100,10 @@ pub async fn get_auctions(page: i64, auctions: &DashMap<String, u64>) -> Result<
 
             for (x, y) in map.into_iter() {
                 if let Some(s) = auctions.get(&x)
-                    && *s < y {
-                        continue;
-                    };
+                    && *s < y
+                {
+                    continue;
+                };
                 auctions.insert(x.to_owned(), y);
             }
         }

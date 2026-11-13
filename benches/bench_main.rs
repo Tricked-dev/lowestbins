@@ -1,10 +1,10 @@
 use std::io::{Cursor, Read};
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use dashmap::DashMap;
 
 use lowestbins::{
-    fetch::auctions::{parse_auctions, HypixelResponse},
+    fetch::auctions::{HypixelResponse, parse_auctions},
     nbt_utils::Item,
 };
 
