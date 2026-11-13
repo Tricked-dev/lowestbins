@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, env, fs, process::Command};
 
-use colored::{control::set_override, Colorize};
+use colored::{Colorize, control::set_override};
 
 const LOC: &str = "https://raw.githubusercontent.com/Skytils/SkytilsMod-Data/main/constants/sellprices.json";
 static LOGO: &str = r#"

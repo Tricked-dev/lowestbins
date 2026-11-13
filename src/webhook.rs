@@ -1,4 +1,4 @@
-use crate::{error::Result, CONFIG, HTTP_CLIENT};
+use crate::{CONFIG, HTTP_CLIENT, error::Result};
 // use isahc::{AsyncBody, Request};
 use serde::Serialize;
 

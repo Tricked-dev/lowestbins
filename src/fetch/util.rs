@@ -1,6 +1,6 @@
 use serde::de::DeserializeOwned;
 
-use crate::{error, API_URL, HTTP_CLIENT};
+use crate::{API_URL, HTTP_CLIENT, error};
 
 pub async fn get_path<T: DeserializeOwned>(path: &'_ str) -> error::Result<T> {
     #[allow(unused_mut)]

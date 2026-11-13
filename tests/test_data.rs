@@ -4,7 +4,7 @@ use std::{
 };
 
 use dashmap::DashMap;
-use lowestbins::fetch::auctions::{parse_auctions, HypixelResponse};
+use lowestbins::fetch::auctions::{HypixelResponse, parse_auctions};
 
 // Regenerate the bench-auctions.json fixture against the current parser by
 // running:

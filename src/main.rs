@@ -1,9 +1,9 @@
 use std::{env, fs};
 
 use futures_util::future::join;
-use lowestbins::{error::Result, fetch::fetch_auctions, server::start_server, AUCTIONS, CONFIG, SOURCE};
+use lowestbins::{AUCTIONS, CONFIG, SOURCE, error::Result, fetch::fetch_auctions, server::start_server};
 use mimalloc::MiMalloc;
-use tokio::{time, time::Duration, signal};
+use tokio::{signal, time, time::Duration};
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -36,9 +36,12 @@ async fn wait_for_shutdown() -> Result<()> {
 
     #[cfg(windows)]
     let terminate = async {
-        let mut ctrl_break = signal::windows::ctrl_break().map_err(|e| anyhow::anyhow!("Failed to install Ctrl+Break: {e}"))?;
-        let mut ctrl_close = signal::windows::ctrl_close().map_err(|e| anyhow::anyhow!("Failed to install Ctrl+Close: {e}"))?;
-        let mut ctrl_shutdown = signal::windows::ctrl_shutdown().map_err(|e| anyhow::anyhow!("Failed to install Ctrl+Shutdown: {e}"))?;
+        let mut ctrl_break =
+            signal::windows::ctrl_break().map_err(|e| anyhow::anyhow!("Failed to install Ctrl+Break: {e}"))?;
+        let mut ctrl_close =
+            signal::windows::ctrl_close().map_err(|e| anyhow::anyhow!("Failed to install Ctrl+Close: {e}"))?;
+        let mut ctrl_shutdown =
+            signal::windows::ctrl_shutdown().map_err(|e| anyhow::anyhow!("Failed to install Ctrl+Shutdown: {e}"))?;
 
         tokio::select! {
             _ = ctrl_break.recv() => {},

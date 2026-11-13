@@ -100,6 +100,10 @@ pub struct PriceState {
     pub historical_auctions: BTreeMap<String, u64>,
     pub available_auctions: BTreeMap<String, u64>,
     pub bazaar: BTreeMap<String, f64>,
+
+    pub bazaar_instant_buy: BTreeMap<String, f64>,
+    pub bazaar_instant_sell: BTreeMap<String, f64>,
+    pub bazaar_updated_at: Option<u64>,
 }
 
 impl PriceState {
@@ -209,8 +213,7 @@ pub static AUCTIONS: Lazy<Mutex<PriceState>> = Lazy::new(|| {
 
     let mut res = PriceState {
         historical_auctions,
-        available_auctions: BTreeMap::new(),
-        bazaar: BTreeMap::new(),
+        ..PriceState::default()
     };
     res.historical_auctions.extend(HashMap::from(get_prices_map()));
     Mutex::new(res)

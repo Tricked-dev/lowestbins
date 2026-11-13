@@ -6,7 +6,7 @@ use std::{
 use hyper::body::Bytes;
 use once_cell::sync::Lazy;
 use parking_lot::{Mutex, RwLock};
-use serde::{ser::SerializeMap, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, ser::SerializeMap};
 use tokio::task;
 
 pub(crate) const DAY_SLOTS: usize = 7;
@@ -53,9 +53,10 @@ struct PriceHistory {
 impl PriceHistory {
     fn load_or_new() -> Self {
         if let Ok(bytes) = fs::read(PERSIST_PATH)
-            && let Ok(p) = serde_json::from_slice::<PersistData>(&bytes) {
-                return Self::from_persist(p);
-            }
+            && let Ok(p) = serde_json::from_slice::<PersistData>(&bytes)
+        {
+            return Self::from_persist(p);
+        }
         Self {
             item_index: HashMap::new(),
             items: Vec::new(),
